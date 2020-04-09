@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <Tlhelp32.h>
 #include <ctime>
 #include <curl/curl.h>
 
@@ -54,12 +55,14 @@ HFONT hFont;
 LPCWSTR FontName[] = { L"Verdana" };
 
 const char* FTP_URL		= "ftp://158.46.49.38/";
-const wchar_t* version	= L"1.4";
+const wchar_t* version	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2    = L"Английский (English)";
 const wchar_t* LogFile  = L"logfile.txt";
 int CurrentLang			= 1; // 1 - Russian, 2 - English
 int InstallLang			= 1; // 1 - Russian, 2 - English
+bool QueueError			= FALSE;
+bool Beginning			= FALSE;
 FILE* CnsOpen;
 
 static size_t CurlWriteData(void* ptr, size_t size, const size_t nmemb, FILE* stream)
@@ -364,6 +367,7 @@ double File::FtpGetFileSize(char* FileName)
 //
 void File::FileQueueSet(wchar_t* DestDir)
 {
+	Beginning = TRUE;
 	Console::ShowConsole();
 	ShowWindow(hWnd, SW_HIDE);
 	LOG::LogMessage("[Main] A process was started.", 0, 0, 0);
@@ -373,8 +377,12 @@ void File::FileQueueSet(wchar_t* DestDir)
 		LOG::LogMessage("[Main] Use English version of mod.", 0, 0, 0);
 
 	// Устанавливаем заданную директорию "по умолчанию"
-	SetCurrentDirectoryW(DestDir);
-	LOG::LogMessage(L"[Main] Destination path:", 0, (LPCWSTR)DestDir, 0);
+	wchar_t Destination[2048];
+	wcscpy(Destination, DestDir);
+	wcscat(Destination, L"DataTemp\\");
+	CreateDirectoryW(Destination, NULL);
+	SetCurrentDirectoryW(Destination);
+	LOG::LogMessage(L"[Main] Destination path:", 0, (LPCWSTR)Destination, 0);
 
 	char files_exe[][40] = {
 		"1_temp.exe",
@@ -383,18 +391,17 @@ void File::FileQueueSet(wchar_t* DestDir)
 		"4_temp.exe"
 	};
 
-	bool CriticalError = FALSE;
 	for (int i = 0; i < 4; i++)
 	{
 		system("cls");
 		Console::SetTextColor(14);
-		wprintf(L"Destination: %s\n", DestDir);
+		wprintf(L"Destination: %s\n", Destination);
 		printf("File name: %s\n\n", files_exe[i]);
 		Console::SetTextColor(15);
 
 		if (!FileDownload(files_exe[i]))
 		{
-			CriticalError = TRUE;
+			QueueError = TRUE;
 			Sleep(2000);
 			break;
 		}
@@ -406,7 +413,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 			printf("Error! File %s is not found in the destination directory! Installation is failed!\n", files_exe[i]);
 			LOG::LogMessage("[Main] File is not found in the destination directory:", 1, files_exe[i], 0);
 			Console::SetTextColor(15);
-			CriticalError = TRUE;
+			QueueError = TRUE;
 			Sleep(2000);
 			break;
 		}
@@ -415,19 +422,56 @@ void File::FileQueueSet(wchar_t* DestDir)
 		DeleteFileA(files_exe[i]);
 	}
 
-	Sleep(1000);
+	system("cls");
+	SetCurrentDirectoryW(DestDir);
+	if (!QueueError)
+	{
+		LOG::LogMessage("[Windows Shell] Moving files into DATA folder...", 0, 0, 0);
+		wprintf(L"Moving files into DATA folder...\n");
+		Console::SetTextColor(14);
+		wprintf(L"Please, don't terminate the process to avoid mistakes!\n");
+		Console::SetTextColor(15);
+		if (!ShellMoveFiles(L"DataTemp\\Data\\*\0", L"Data\0"))
+		{
+			QueueError = TRUE;
+			Sleep(2000);
+		}
+		else
+		{
+			Console::SetTextColor(2);
+			wprintf(L"Moving files into DATA folder: Ok!\n");
+			Console::SetTextColor(15);
+		}
+	}
+
+	RemoveDirectoryW(L"DataTemp\\Data");
+	RemoveDirectoryW(L"DataTemp");
+
+	Sleep(2000);
 	ShowWindow(hWnd, SW_SHOW);
 	Console::HideConsole();
-	if (CriticalError)
+	if (!QueueError)
 	{
-		LOG::LogMessage("[Main] Process was done with errors.\n", 0, 0, 0);
-		MessageBox(hWnd, L"Installation is failed. Some of files are lost.", WINDOW_NAME, MB_OK | MB_ICONERROR);
+		wchar_t text[25];
+		if (CurrentLang == 1)
+			wcscpy(text, L"Установка завершена.");
+		else
+			wcscpy(text, L"Installation is done.");
+		MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONQUESTION);
+		LOG::LogMessage("[Main] Process was done successfully.\n", 0, 0, 0);
 	}
 	else
 	{
-		LOG::LogMessage("[Main] Process was done successfully.\n", 0, 0, 0);
-		MessageBox(hWnd, L"Installation is done.", WINDOW_NAME, MB_OK | MB_ICONQUESTION);
+		QueueError = FALSE;
+		wchar_t text[80];
+		if (CurrentLang == 1)
+			wcscpy(text, L"Установка завершена с ошибками. Проверьте logfile.txt для поиска проблемы.");
+		else
+			wcscpy(text, L"Installation is failed. See logfile.txt for searching problems.");
+		MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONERROR);
+		LOG::LogMessage("[Main] Process was done with errors.\n", 0, 0, 0);
 	}
+	Beginning = FALSE;
 }
 bool File::FileDownload(char* FileName)
 {
@@ -514,10 +558,39 @@ bool File::FileOpen(char* FileName)
 	CloseHandle(pi.hThread);
 
 	Console::SetTextColor(2);
-	printf("Extraction is done.\n");
+	printf("Extraction is done.\n\n");
 	LOG::LogMessage("[FileOpen] Extraction is done:", 0, FileName, 0);
 	Console::SetTextColor(15);
 	return 1;
+}
+int  File::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
+{
+	const wchar_t* Src  = srcPath;
+	const wchar_t* Dest = newPath;
+
+	SHFILEOPSTRUCTW fileOperation;
+	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));
+
+	fileOperation.wFunc  = FO_MOVE;
+	fileOperation.fFlags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_NOERRORUI | FOF_SIMPLEPROGRESS;
+	fileOperation.pFrom  = Src;
+	fileOperation.pTo    = Dest;
+	fileOperation.hwnd   = hWnd;
+
+	int result = 1;
+	int ShellResult = SHFileOperationW(&fileOperation);
+	if (ShellResult != 0)
+	{
+		LOG::LogMessage("[Windows Shell] Error code:", 1, 0, ShellResult);
+		Console::SetTextColor(4);
+		printf("SHFileOperation Failure: %u\n", ShellResult);
+		Console::SetTextColor(15);
+		result = 0;
+	}
+
+	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));
+
+	return result;
 }
 
 void LOG::InitLog()
@@ -542,7 +615,7 @@ void LOG::InitLog()
 	fprintf(out, "Version: %s\n\n", buf);
 	fclose(out);
 }
-void LOG::LogMessage(const char* message, bool ErrorCode, const char* param1, int param2)
+void LOG::LogMessage(const char* message, int ErrorCode, const char* param1, int param2)
 {
 	const int MAXLEN = 80;
 	char s[MAXLEN];
@@ -560,14 +633,16 @@ void LOG::LogMessage(const char* message, bool ErrorCode, const char* param1, in
 	{
 		if (!param1) param1 = "";
 		if (!param2) param2 = 0;
-		if (ErrorCode)
+		if (ErrorCode == 1)
 			fprintf(out, "(%s) (ERROR) %s %s %d\n", s, message, param1, param2);
+		else if (ErrorCode == 2)
+			fprintf(out, "(%s) (WARNING) %s %s\n", s, message, param1);
 		else
 			fprintf(out, "(%s) (INFO) %s %s\n", s, message, param1);
 		fclose(out);
 	}
 }
-void LOG::LogMessage(const wchar_t* message, bool ErrorCode, const wchar_t* param1, int param2)
+void LOG::LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param1, int param2)
 {
 	const int MAXLEN = 80;
 	wchar_t s[MAXLEN];
@@ -585,8 +660,10 @@ void LOG::LogMessage(const wchar_t* message, bool ErrorCode, const wchar_t* para
 	{
 		if (!param1) param1 = L"";
 		if (!param2) param2 = 0;
-		if (ErrorCode)
+		if (ErrorCode == 1)
 			fwprintf(out, L"(%s) (ERROR) %s %s %d\n", s, message, param1, param2);
+		else if (ErrorCode == 2)
+			fwprintf(out, L"(%s) (WARNING) %s %s\n", s, message, param1);
 		else
 			fwprintf(out, L"(%s) (INFO) %s %s\n", s, message, param1);
 		fclose(out);
@@ -677,125 +754,112 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	const wchar_t* str = L"Выберите локализацию:\0";
 	switch (message)
 	{
-	case WM_CREATE:
-		Window::WindowMenu(hWnd);
-		break;
-	case WM_PAINT:
-	{
-		hdc = BeginPaint(hWnd, &ps);
-
-		static LOGFONT lf;
-		lf.lfCharSet = DEFAULT_CHARSET;
-		lf.lfPitchAndFamily = DEFAULT_PITCH;
-		wcscpy(lf.lfFaceName, *FontName);
-		lf.lfHeight = 15;
-		lf.lfWidth = 6;
-		lf.lfWeight = 5;
-		lf.lfEscapement = 0; //шрифт без поворота
-
-		hFont2 = CreateFontIndirect(&lf);
-		SelectObject(hdc, hFont2);
-		SetTextColor(hdc, RGB(255, 255, 255));
-		SetBkMode(hdc, TRANSPARENT);
-		TextOutW(hdc, 10, 20, str, wcslen(str));
-
-		DeleteObject(hFont2); //выгрузим из памяти объект шрифта
-
-		EndPaint(hWnd, &ps);
-	}
-	break;
-	case WM_COMMAND:
-	{
-		if (LOWORD(wParam) == ID_ABOUT)
+		case WM_CREATE:
+			Window::WindowMenu(hWnd);
+			break;
+		case WM_PAINT:
 		{
-			system("<mybrowser> https://steamcommunity.com/sharedfiles/filedetails/?id=766483986");
-			wchar_t text[200];
+			hdc = BeginPaint(hWnd, &ps);
+
+			static LOGFONT lf;
+			lf.lfCharSet = DEFAULT_CHARSET;
+			lf.lfPitchAndFamily = DEFAULT_PITCH;
+			wcscpy(lf.lfFaceName, *FontName);
+			lf.lfHeight = 15;
+			lf.lfWidth = 6;
+			lf.lfWeight = 5;
+			lf.lfEscapement = 0; //шрифт без поворота
+
+			hFont2 = CreateFontIndirect(&lf);
+			SelectObject(hdc, hFont2);
+			SetTextColor(hdc, RGB(255, 255, 255));
+			SetBkMode(hdc, TRANSPARENT);
+			TextOutW(hdc, 10, 20, str, wcslen(str));
+
+			DeleteObject(hFont2); //выгрузим из памяти объект шрифта
+
+			EndPaint(hWnd, &ps);
+		}
+		break;
+		case WM_COMMAND:
+		{
+			if (LOWORD(wParam) == ID_ABOUT)
+			{
+				wchar_t text[200];
+				if (CurrentLang == 1)
+				{
+					wcscpy(text, L"Версия установщика: ");
+					wcscat(text, version);
+					wcscat(text, L"\nДля связи по сети используется библиотека CURL.\n\n");
+					wcscat(text, L"Автор: Алексей 'Aleksey_SR' Петрачков");
+				}
+				else
+				{
+					wcscpy(text, L"Version: ");
+					wcscat(text, version);
+					wcscat(text, L"\nThe programm use CURL library for network connections.\n\n");
+					wcscat(text, L"Author: Alex 'Aleksey_SR' Petrachkov");
+				}
+
+				MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONQUESTION);
+			}
+			if (HIWORD(wParam) == CBN_SELCHANGE)
+			{
+				int ItemIndex = SendMessage((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+				TCHAR  ListItem[256];
+				(TCHAR)SendMessage((HWND)lParam, (UINT)CB_GETLBTEXT, (WPARAM)ItemIndex, (LPARAM)ListItem);
+				wcscat((LPWSTR)ListItem, L"\0");
+				if (wcslen((LPWSTR)ListItem) == wcslen(Lang2))
+					InstallLang = 2;
+				else
+					InstallLang = 1;
+			}
+			if (LOWORD(wParam) == ID_START)
+				Window::BrowseForFolder();
+			if (LOWORD(wParam) == ID_FAQ)
+				ShellExecute(0, 0, L"https://steamcommunity.com/sharedfiles/filedetails/?id=766483986", 0, 0, SW_SHOW);
+			break;
+		}
+		break;
+		case WM_DISPLAYCHANGE:
+			InvalidateRect(hWnd, NULL, FALSE);
+			break;
+		case WM_CLOSE:
+		{
+			wchar_t text[55];
 			if (CurrentLang == 1)
-			{
-				wcscpy(text, L"Версия установщика: ");
-				wcscat(text, version);
-				wcscat(text, L"\nДля связи по сети используется библиотека CURL.\n\n");
-				wcscat(text, L"Автор: Алексей 'Aleksey_SR' Петрачков");
-			}
+				wcscpy(text, L"Вы уверены, что хотите выйти из программы установки?");
 			else
+				wcscpy(text, L"Are you sure to close the installer?");
+
+			const int result = MessageBox(hWnd, text, WINDOW_NAME, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			switch (result)
 			{
-				wcscpy(text, L"Version: ");
-				wcscat(text, version);
-				wcscat(text, L"\nThe programm use CURL library for network connections.\n\n");
-				wcscat(text, L"Author: Alex 'Aleksey_SR' Petrachkov");
+				case IDYES:
+					DestroyWindow(hWnd);
 			}
-
-			MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONQUESTION);
-		}
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-			// If the user makes a selection from the list:
-			//   Send CB_GETCURSEL message to get the index of the selected list item.
-			//   Send CB_GETLBTEXT message to get the item.
-			//   Display the item in a messagebox.
-		{
-			int ItemIndex = SendMessage((HWND)lParam, (UINT)CB_GETCURSEL,
-				(WPARAM)0, (LPARAM)0);
-			TCHAR  ListItem[256];
-			(TCHAR)SendMessage((HWND)lParam, (UINT)CB_GETLBTEXT,
-				(WPARAM)ItemIndex, (LPARAM)ListItem);
-			wcscat((LPWSTR)ListItem, L"\0");
-			if (wcslen((LPWSTR)ListItem) == wcslen(Lang2))
-				InstallLang = 2;
-			else
-				InstallLang = 1;
-		}
-		if (LOWORD(wParam) == ID_START)
-			Window::BrowseForFolder();
-		if (LOWORD(wParam) == ID_FAQ)
-			ShellExecute(0, 0, L"https://steamcommunity.com/sharedfiles/filedetails/?id=766483986", 0, 0, SW_SHOW);
 		break;
-	}
-	break;
-	case WM_DISPLAYCHANGE:
-		InvalidateRect(hWnd, NULL, FALSE);
-		break;
-	case WM_CLOSE:
-	{
-		wchar_t text[55];
-		if (CurrentLang == 1)
-			wcscpy(text, L"Вы уверены, что хотите выйти из программы установки?");
-		else
-			wcscpy(text, L"Are you sure to close the installer?");
-
-		const int result = MessageBox(hWnd, text, WINDOW_NAME, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
-		switch (result)
+		}
+		case WM_DESTROY:
 		{
-		case IDYES:
-		{
-			DestroyWindow(hWnd);
+			if (File::FileExists("1_temp.exe") == 1)
+				DeleteFileA("1_temp.exe");
+			if (File::FileExists("2_temp.exe") == 1)
+				DeleteFileA("2_temp.exe");
+			if (File::FileExists("3_temp.exe") == 1)
+				DeleteFileA("3_temp.exe");
+			if (File::FileExists("4_temp.exe") == 1)
+				DeleteFileA("4_temp.exe");
+			LOG::ReleaseLog();
+			PostQuitMessage(0);
+			// for console app (not for windows app)
+			#ifdef CONSOLEAPP
+				PostMessage(hWndConsole, WM_CLOSE, 0, 0);
+			#endif
 			break;
 		}
-		case IDNO:
-			break;
-		}
-		break;
-	}
-	case WM_DESTROY:
-	{
-		if (File::FileExists("1_temp.exe") == 1)
-			DeleteFileA("1_temp.exe");
-		if (File::FileExists("2_temp.exe") == 1)
-			DeleteFileA("2_temp.exe");
-		if (File::FileExists("3_temp.exe") == 1)
-			DeleteFileA("3_temp.exe");
-		if (File::FileExists("4_temp.exe") == 1)
-			DeleteFileA("4_temp.exe");
-		LOG::ReleaseLog();
-		PostQuitMessage(0);
-		// for console app (not for windows app)
-		#ifdef CONSOLEAPP
-		 	DestroyWindow(hWndConsole);
-		 	exit(0);
-		#endif
-		break;
-	}
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	return 0;
@@ -805,19 +869,36 @@ int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 	wchar_t szDir[2048];
 	switch (message)
 	{
-	case BFFM_INITIALIZED:
-		SendMessage(hWnd, BFFM_SETSELECTION, TRUE, (LPARAM)szDir);
-	break;
-	case BFFM_SELCHANGED:
-		if (SHGetPathFromIDListW((LPITEMIDLIST)lParam, szDir))
-			SendMessage(hWnd, BFFM_SETSTATUSTEXT, 0, (LPARAM)szDir);
-	break;
+		case BFFM_INITIALIZED:
+			SendMessage(hWnd, BFFM_SETSELECTION, TRUE, (LPARAM)szDir);
+		break;
+		case BFFM_SELCHANGED:
+			if (SHGetPathFromIDListW((LPITEMIDLIST)lParam, szDir))
+				SendMessage(hWnd, BFFM_SETSTATUSTEXT, 0, (LPARAM)szDir);
+		break;
 	}
 	return 0;
 }
+BOOL WINAPI CnsHandler(DWORD dwCtrlType)
+{
+	switch (dwCtrlType)
+	{
+	case CTRL_C_EVENT:
+		return TRUE;    //this just disables Ctrl-C
+	case CTRL_CLOSE_EVENT:
+	{
+		if (Beginning)
+			LOG::LogMessage("[Main] A process was terminated by user prematurely!", 2, 0, 0);
+		LOG::ReleaseLog();
+		FreeConsole();
+		return TRUE;
+	}
+	default:
+		return FALSE;
+	}
+}
 
 // Custom Entry Point for console/window app
-
 // WARNING: use different types of linker options (console app or windows app or set it to null) to prevent linker error
 #ifdef CONSOLEAPP
 int main(int argc, char** argv)
@@ -827,6 +908,7 @@ int main(int argc, char** argv)
 
 	char title[500];
 	GetConsoleTitleA(title, 500);
+	SetConsoleCtrlHandler(CnsHandler, TRUE);
 
 	hWndConsole = FindWindowA(NULL, title);
 	ShowWindow(hWndConsole, SW_SHOWNORMAL);
@@ -856,12 +938,18 @@ int main(int argc, char** argv)
 	// Цикл обработки сообщений
 	MSG msg = { 0 };
 
-	while (GetMessage(&msg, hWnd, 0, 0))
+	BOOL bRet;
+	while (bRet = GetMessage(&msg, NULL, 0, 0) != 0)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (bRet != -1)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
+	LOG::ReleaseLog();
+	
 	return msg.wParam;
 }
 #else
@@ -872,12 +960,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	AllocConsole();
 	CnsOpen = freopen("CONOUT$", "w", stdout);
+	SetConsoleCtrlHandler(CnsHandler, TRUE);
+
 	Console::HideConsole();
 
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	if (!RegisterMainClass(hInstance)) {
+	if (RegisterMainClass(hInstance)) {
 		Console::ShowConsole();
 		printf("RegisterMainClass: Critical error (C++ error code: %d)\n", GetLastError());
 		LOG::LogMessage("[Main] Critical error in application (cannot register class) :", 1, 0, GetLastError());
@@ -898,10 +988,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Цикл обработки сообщений
 	MSG msg = { 0 };
 
-	while (GetMessage(&msg, NULL, 0, 0))
+	BOOL bRet;
+	while (bRet = GetMessage(&msg, NULL, 0, 0) != 0)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		if (bRet != -1)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
 	}
 
 	return msg.wParam;
