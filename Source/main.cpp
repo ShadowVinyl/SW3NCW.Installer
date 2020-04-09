@@ -57,8 +57,8 @@ LPCWSTR FontName[] = { L"Verdana" };
 const char* FTP_URL		= "ftp://158.46.49.38/";
 const wchar_t* version	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
-const wchar_t* Lang2    = L"Английский (English)";
-const wchar_t* LogFile  = L"logfile.txt";
+const wchar_t* Lang2	= L"Английский (English)";
+const wchar_t* LogFile	= L"logfile.txt";
 int CurrentLang			= 1; // 1 - Russian, 2 - English
 int InstallLang			= 1; // 1 - Russian, 2 - English
 bool QueueError			= FALSE;
@@ -235,11 +235,11 @@ bool Window::BrowseForFolder()
 	bi.pszDisplayName = (LPWSTR)DestDir;
 	bi.lpszTitle	  = text;
 	bi.ulFlags		  = BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS;
-	bi.lpfn			  = BrowsePathProc;
+	bi.lpfn			  = &BrowsePathProc;
 	bi.iImage		  = 0;
-	bi.lParam		  = (LPARAM)DestDir;
+	bi.lParam		  = (LPARAM)L"C:\\Program Files (x86)";
 
-	pidl = SHBrowseForFolder(&bi);
+	pidl = ::SHBrowseForFolder(&bi);
 
 	if (!pidl)
 		fRet = NULL;
@@ -870,7 +870,10 @@ int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 	switch (message)
 	{
 		case BFFM_INITIALIZED:
-			SendMessage(hWnd, BFFM_SETSELECTION, TRUE, (LPARAM)szDir);
+		{
+			LPCTSTR pszInitialPath = reinterpret_cast<LPCTSTR>(pData);
+			::SendMessage(hWnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(pszInitialPath));
+		}
 		break;
 		case BFFM_SELCHANGED:
 			if (SHGetPathFromIDListW((LPITEMIDLIST)lParam, szDir))
@@ -885,6 +888,7 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 	{
 	case CTRL_C_EVENT:
 		return TRUE;    //this just disables Ctrl-C
+	// if user pressed "X" button on console window
 	case CTRL_CLOSE_EVENT:
 	{
 		if (Beginning)
@@ -961,13 +965,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	AllocConsole();
 	CnsOpen = freopen("CONOUT$", "w", stdout);
 	SetConsoleCtrlHandler(CnsHandler, TRUE);
-
 	Console::HideConsole();
 
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	if (RegisterMainClass(hInstance)) {
+	if (!RegisterMainClass(hInstance)) {
 		Console::ShowConsole();
 		printf("RegisterMainClass: Critical error (C++ error code: %d)\n", GetLastError());
 		LOG::LogMessage("[Main] Critical error in application (cannot register class) :", 1, 0, GetLastError());
@@ -985,7 +988,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	LOG::LogMessage("[Main] InitWindow: Ok!", 0, 0, 0);
 
-	// Цикл обработки сообщений
+	// Message loop
 	MSG msg = { 0 };
 
 	BOOL bRet;
