@@ -20,6 +20,7 @@ class File
 		static void FileQueueSet(wchar_t* DestDir);
 		static bool FileDownload(char* FileName);
 		static bool FileOpen(char* FileName);
+		static int  ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath);
 };
 
 class Window
@@ -37,11 +38,12 @@ public:
 	// we use 2 same functions with ANSI and UNICODE parameters
 	static void InitLog();
 	static void ReleaseLog();
-	static void LogMessage(const char* message, bool ErrorCode, const char* param1, int param2);
-	static void LogMessage(const wchar_t* message, bool ErrorCode, const wchar_t* param1, int param2);
+	static void LogMessage(const char* message, int ErrorCode, const char* param1, int param2);
+	static void LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param1, int param2);
 };
 
 ATOM RegisterMainClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
+BOOL WINAPI CnsHandler(DWORD dwCtrlType);
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData);
