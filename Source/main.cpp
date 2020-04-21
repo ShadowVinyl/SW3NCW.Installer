@@ -7,23 +7,21 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
-#include <Tlhelp32.h>
 #include <ctime>
 #include <curl/curl.h>
 
 #include "main.h"
 
-#pragma warning(disable : 4996)
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4302)
+
+#pragma comment(lib,"Shlwapi.lib")
+#pragma comment(lib,"libcurl.lib")
 
 // Заставляем линкер генерировать манифест визуальных стилей окон
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
-#pragma comment(lib,"Shlwapi.lib")
-#pragma comment(lib,"libcurl.lib")
 
 // Имя окна
 #define WINDOW_NAME L"Star Wolves 3: New Civil War Installer"
@@ -38,6 +36,11 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #define WINDOW_SIZE_Y 480
 
 #define NO_WIN32_LEAN_AND_MEAN
+
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable:4996)
+#endif
 
 // ID
 #define ID_START 1
@@ -229,7 +232,7 @@ bool Window::BrowseForFolder()
 		wcscpy(text, L"Выберите папку с игрой Star Wolves 3: Civil War");
 	else
 		wcscpy(text, L"Choose a game folder with Star Wolves 3: Civil War");
-
+	
 	bi.hwndOwner	  = hWnd;
 	bi.pidlRoot		  = NULL;
 	bi.pszDisplayName = (LPWSTR)DestDir;
@@ -384,22 +387,32 @@ void File::FileQueueSet(wchar_t* DestDir)
 	SetCurrentDirectoryW(Destination);
 	LOG::LogMessage(L"[Main] Destination path:", 0, (LPCWSTR)Destination, 0);
 
+	char* FileName;
 	char files_exe[][40] = {
 		"1_temp.exe",
 		"2_temp.exe",
 		"3_temp.exe",
-		"4_temp.exe"
 	};
 
 	for (int i = 0; i < 4; i++)
 	{
+		if (i != 3)
+			FileName = files_exe[i];
+		else
+		{
+			if (InstallLang == 1)
+				FileName = (char*)"4_temp_rus.exe";
+			else
+				FileName = (char*)"4_temp_eng.exe";
+		}
+
 		system("cls");
 		Console::SetTextColor(14);
 		wprintf(L"Destination: %s\n", Destination);
-		printf("File name: %s\n\n", files_exe[i]);
+		printf("File name: %s\n\n", FileName);
 		Console::SetTextColor(15);
 
-		if (!FileDownload(files_exe[i]))
+		if (!FileDownload(FileName))
 		{
 			QueueError = TRUE;
 			Sleep(2000);
@@ -407,7 +420,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 		}
 
 		Sleep(2000);
-		if (!FileOpen(files_exe[i]))
+		if (!FileOpen(FileName))
 		{
 			Console::SetTextColor(4);
 			printf("Error! File %s is not found in the destination directory! Installation is failed!\n", files_exe[i]);
@@ -419,7 +432,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 		}
 
 		Sleep(1000);
-		DeleteFileA(files_exe[i]);
+		DeleteFileA(FileName);
 	}
 
 	system("cls");
@@ -872,7 +885,7 @@ int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 		case BFFM_INITIALIZED:
 		{
 			LPCTSTR pszInitialPath = reinterpret_cast<LPCTSTR>(pData);
-			::SendMessage(hWnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(pszInitialPath));
+			SendMessage(hWnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(pszInitialPath));
 		}
 		break;
 		case BFFM_SELCHANGED:
@@ -886,19 +899,19 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 {
 	switch (dwCtrlType)
 	{
-	case CTRL_C_EVENT:
-		return TRUE;    //this just disables Ctrl-C
-	// if user pressed "X" button on console window
-	case CTRL_CLOSE_EVENT:
-	{
-		if (Beginning)
-			LOG::LogMessage("[Main] A process was terminated by user prematurely!", 2, 0, 0);
-		LOG::ReleaseLog();
-		FreeConsole();
-		return TRUE;
-	}
-	default:
-		return FALSE;
+		case CTRL_C_EVENT:
+			return TRUE;    //this just disables Ctrl-C
+		// if user pressed "X" button on console window
+		case CTRL_CLOSE_EVENT:
+		{
+			if (Beginning)
+				LOG::LogMessage("[Main] A process was terminated by user prematurely!", 2, 0, 0);
+			LOG::ReleaseLog();
+			FreeConsole();
+			return TRUE;
+		}
+		default:
+			return FALSE;
 	}
 }
 
