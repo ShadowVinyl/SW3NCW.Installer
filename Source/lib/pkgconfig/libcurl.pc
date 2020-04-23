@@ -23,9 +23,9 @@
 # This should most probably benefit from getting a "Requires:" field added
 # dynamically by configure.
 #
-prefix=C:/Users/Alex/Desktop/vcpkg-master/packages/curl_x86-windows
+prefix=C:/Users/Alex/Desktop/CPP dev/vcpkg-master/packages/curl_x86-windows-static
 exec_prefix=${prefix}
-libdir=C:/Users/Alex/Desktop/vcpkg-master/packages/curl_x86-windows/lib
+libdir=C:/Users/Alex/Desktop/CPP dev/vcpkg-master/packages/curl_x86-windows-static/lib
 includedir=${prefix}/include
 supported_protocols="DICT FILE FTP FTPS GOPHER HTTP HTTPS IMAP IMAPS LDAP POP3 POP3S RTSP SMTP SMTPS TELNET TFTP"
 supported_features="SSL IPv6 libz AsynchDNS SSPI SPNEGO Kerberos NTLM"

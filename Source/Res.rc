@@ -13,7 +13,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// ГђГіГ±Г±ГЄГЁГ© (ГђГ®Г±Г±ГЁГї) resources
+// Русский (Россия) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
@@ -108,7 +108,7 @@ IDD_FORMVIEW DIALOGEX 0, 0, 185, 93
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
-    LTEXT           "TODO: ГЇГ°ГҐГ¤Г±ГІГ ГўГ«ГҐГ­ГЁГҐ ГґГ®Г°Г¬Г» Г¬Г ГЄГҐГІГ ",IDC_STATIC,55,42,74,26
+    LTEXT           "TODO: представление формы макета",IDC_STATIC,55,42,74,26
 END
 
 
@@ -126,7 +126,14 @@ BEGIN
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // ГђГіГ±Г±ГЄГЁГ© (ГђГ®Г±Г±ГЁГї) resources
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+
+#endif    // Русский (Россия) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

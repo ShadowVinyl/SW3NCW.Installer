@@ -1,22 +1,26 @@
-﻿#include <Windows.h>
+﻿#define CURL_STATICLIB
+
+#include <Windows.h>
 #include <Shlwapi.h>
 #include <shellapi.h>
 #include <commctrl.h>
 #include <string>
 #include <shlobj.h>
 #include <stdio.h>
-#include <iostream>
 #include <fstream>
 #include <ctime>
 #include <curl/curl.h>
 
+#include "pugixml_read.h"
 #include "main.h"
 
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4302)
 
 #pragma comment(lib,"Shlwapi.lib")
+#pragma comment(lib,"zlib.lib")
 #pragma comment(lib,"libcurl.lib")
+#pragma comment(lib,"pugixml.lib")
 
 // Заставляем линкер генерировать манифест визуальных стилей окон
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -54,18 +58,19 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 HINSTANCE hInstance;
 HWND hWnd, hWndConsole, hButtonStart, hButtonInfo, hButtonAbout, hComboBox;
 HFONT hFont;
+HDC hdc;
 
 LPCWSTR FontName[] = { L"Verdana" };
 
 const char* FTP_URL		= "ftp://158.46.49.38/";
-const wchar_t* version	= L"1.5";
+const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
 const wchar_t* LogFile	= L"logfile.txt";
-int CurrentLang			= 1; // 1 - Russian, 2 - English
-int InstallLang			= 1; // 1 - Russian, 2 - English
+int InstallLang			= 0; // 0 - Russian, 1 - English
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
+int CurrentLang;
 FILE* CnsOpen;
 
 static size_t CurlWriteData(void* ptr, size_t size, const size_t nmemb, FILE* stream)
@@ -131,10 +136,29 @@ void Console::SetTextColor(int ColourIndex)
 
 void Window::WindowMenu(HWND hWnd)
 {
+	struct texts {
+		LPCWSTR text1;
+		LPCWSTR text2;
+		LPCWSTR text3;
+	};
+	texts text;
+	if (CurrentLang == 0)
+	{
+		text.text1 = L"Начать установку";
+		text.text2 = L"Руководство по моду";
+		text.text3 = L"О программе";
+	}
+	else
+	{
+		text.text1 = L"Start installation";
+		text.text2 = L"Guide";
+		text.text3 = L"About";
+	}
+
 	hButtonStart = CreateWindowEx(
 		0,
 		L"BUTTON",
-		L"Начать установку",
+		text.text1,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 160,
 		165, 30,
@@ -148,7 +172,7 @@ void Window::WindowMenu(HWND hWnd)
 	hButtonInfo = CreateWindowEx(
 		0,
 		L"BUTTON",
-		L"Руководство по моду",
+		text.text2,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 120,
 		165, 30,
@@ -161,7 +185,7 @@ void Window::WindowMenu(HWND hWnd)
 	hButtonAbout = CreateWindowEx(
 		0,
 		L"BUTTON",
-		L"О программе",
+		text.text3,
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 80,
 		165, 30,
@@ -197,21 +221,28 @@ void Window::WindowMenu(HWND hWnd)
 }
 void Window::ChangeLanguage()
 {
-	if (CurrentLang == 1)
+	LPCWSTR str;
+	if (CurrentLang == 0)
 	{
-		CurrentLang = 0;
+		CurrentLang = 1;
 		SendMessage(hButtonStart, WM_SETTEXT, 0, (LPARAM)L"Start installation");
-		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Руководство");
+		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Guide");
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"About");
+		str = L"Choose the localization:\0";
+		TextOutW(hdc, 10, 20, str, wcslen(str));
 		LOG::LogMessage("[Main] Change UI language: English", 0, 0, 0);
+		WriteXMLConfigTag("InterfaceLang", "English");
 	}
 	else
 	{
-		CurrentLang = 1;
+		CurrentLang = 0;
 		SendMessage(hButtonStart, WM_SETTEXT, 0, (LPARAM)L"Начать установку");
-		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Guide");
+		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Руководство по моду");
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"О программе");
+		str = L"Выберите локализацию:\0";
+		TextOutW(hdc, 10, 20, str, wcslen(str));
 		LOG::LogMessage("[Main] Change UI language: Russian", 0, 0, 0);
+		WriteXMLConfigTag("InterfaceLang", "Russian");
 	}
 }
 void Window::EnableButtons(bool Flag)
@@ -228,7 +259,7 @@ bool Window::BrowseForFolder()
 	ZeroMemory(&bi, sizeof(bi));
 
 	wchar_t text[52];
-	if (CurrentLang == 1)
+	if (CurrentLang == 0)
 		wcscpy(text, L"Выберите папку с игрой Star Wolves 3: Civil War");
 	else
 		wcscpy(text, L"Choose a game folder with Star Wolves 3: Civil War");
@@ -289,9 +320,9 @@ int  File::FtpGetStatus()
 }
 int  File::FileSize(const char* FileName)
 {
-	std::fstream file(FileName);
+	std::fstream file;
 	file.open(FileName);
-	if (file.bad())
+	if (!file || file.bad())
 	{
 		printf("FileSize: cant open a file (C++ error code: %d)", GetLastError());
 		LOG::LogMessage("[FileSize] Cant open a file", 1, FileName, GetLastError());
@@ -308,7 +339,7 @@ bool File::FileExists(const char* FileName)
 {
 	std::ifstream file;
 	file.open(FileName);
-	if (!file) return 0;
+	if (!file || file.bad()) return 0;
 	file.close();
 	return 1;
 }
@@ -466,7 +497,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 	if (!QueueError)
 	{
 		wchar_t text[25];
-		if (CurrentLang == 1)
+		if (CurrentLang == 0)
 			wcscpy(text, L"Установка завершена.");
 		else
 			wcscpy(text, L"Installation is done.");
@@ -477,7 +508,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 	{
 		QueueError = FALSE;
 		wchar_t text[80];
-		if (CurrentLang == 1)
+		if (CurrentLang == 0)
 			wcscpy(text, L"Установка завершена с ошибками. Проверьте logfile.txt для поиска проблемы.");
 		else
 			wcscpy(text, L"Installation is failed. See logfile.txt for searching problems.");
@@ -608,12 +639,22 @@ int  File::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 
 void LOG::InitLog()
 {
-	const wchar_t* str = version;
-	char buf[32];
-	size_t len = wcstombs(buf, str, wcslen(str));
+	string xmltag = ReadXMLConfigTag("LogOutput");
+	if (xmltag != "True") return;
+
+	char TextUI[10];
+	string xmltagUI = ReadXMLConfigTag("InterfaceLang");
+	if (xmltagUI == "Russian" || xmltagUI != "English")
+		strcpy(TextUI, "Russian");
+	else
+		strcpy(TextUI, "English");
+
+	const wchar_t* str = progver;
+	char version[32];
+	size_t len = wcstombs(version, str, wcslen(str));
 	if (len > 0u)
-		buf[len] = '\0';
-	puts(buf);
+		version[len] = '\0';
+	puts(version);
 
 	time_t t = time(0);
 
@@ -625,11 +666,15 @@ void LOG::InitLog()
 
 	FILE* out = _wfopen(selfdir, L"w");
 	fprintf(out, "Log started: %s\n", ctime(&t));
-	fprintf(out, "Version: %s\n\n", buf);
+	fprintf(out, "Version: %s\n", version);
+	fprintf(out, "Interface: %s\n\n", TextUI);
 	fclose(out);
 }
 void LOG::LogMessage(const char* message, int ErrorCode, const char* param1, int param2)
 {
+	string xmltag = ReadXMLConfigTag("LogOutput");
+	if (xmltag != "True") return;
+
 	const int MAXLEN = 80;
 	char s[MAXLEN];
 	time_t t = time(0);
@@ -657,6 +702,9 @@ void LOG::LogMessage(const char* message, int ErrorCode, const char* param1, int
 }
 void LOG::LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param1, int param2)
 {
+	string xmltag = ReadXMLConfigTag("LogOutput");
+	if (xmltag != "True") return;
+
 	const int MAXLEN = 80;
 	wchar_t s[MAXLEN];
 	time_t t = time(0);
@@ -684,7 +732,10 @@ void LOG::LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param
 }
 void LOG::ReleaseLog()
 {
-	const wchar_t* str = version;
+	string xmltag = ReadXMLConfigTag("LogOutput");
+	if (xmltag != "True") return;
+
+	const wchar_t* str = progver;
 	char buf[32];
 	size_t len = wcstombs(buf, str, wcslen(str));
 	if (len > 0u)
@@ -762,9 +813,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
-	HDC hdc;
 	HFONT hFont2;
-	const wchar_t* str = L"Выберите локализацию:\0";
+	LPCWSTR str;
+	if (CurrentLang == 0)
+		str = L"Выберите локализацию:\0";
+	else
+		str = L"Choose the localization:\0";
 	switch (message)
 	{
 		case WM_CREATE:
@@ -799,17 +853,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			if (LOWORD(wParam) == ID_ABOUT)
 			{
 				wchar_t text[200];
-				if (CurrentLang == 1)
+				if (CurrentLang == 0)
 				{
 					wcscpy(text, L"Версия установщика: ");
-					wcscat(text, version);
+					wcscat(text, progver);
 					wcscat(text, L"\nДля связи по сети используется библиотека CURL.\n\n");
 					wcscat(text, L"Автор: Алексей 'Aleksey_SR' Петрачков");
 				}
 				else
 				{
 					wcscpy(text, L"Version: ");
-					wcscat(text, version);
+					wcscat(text, progver);
 					wcscat(text, L"\nThe programm use CURL library for network connections.\n\n");
 					wcscat(text, L"Author: Alex 'Aleksey_SR' Petrachkov");
 				}
@@ -840,7 +894,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		case WM_CLOSE:
 		{
 			wchar_t text[55];
-			if (CurrentLang == 1)
+			if (CurrentLang == 0)
 				wcscpy(text, L"Вы уверены, что хотите выйти из программы установки?");
 			else
 				wcscpy(text, L"Are you sure to close the installer?");
@@ -899,13 +953,15 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 {
 	switch (dwCtrlType)
 	{
+		//this just disables Ctrl-C
 		case CTRL_C_EVENT:
-			return TRUE;    //this just disables Ctrl-C
+			return TRUE;
 		// if user pressed "X" button on console window
 		case CTRL_CLOSE_EVENT:
 		{
 			if (Beginning)
 				LOG::LogMessage("[Main] A process was terminated by user prematurely!", 2, 0, 0);
+			Beginning = FALSE;
 			LOG::ReleaseLog();
 			FreeConsole();
 			return TRUE;
@@ -979,6 +1035,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CnsOpen = freopen("CONOUT$", "w", stdout);
 	SetConsoleCtrlHandler(CnsHandler, TRUE);
 	Console::HideConsole();
+
+	string xmltag = ReadXMLConfigTag("InterfaceLang");
+	if (xmltag == "Russian" || xmltag != "English")
+		CurrentLang = 0;
+	else
+		CurrentLang = 1;
 
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
