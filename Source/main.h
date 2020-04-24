@@ -40,10 +40,9 @@ public:
 	// we use 2 same functions with ANSI and UNICODE parameters
 	static void InitLog();
 	static void ReleaseLog();
-	static void LogMessage(const char* message, int ErrorCode, const char* param1, int param2);
-	static void LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param1, int param2);
+	static void LogMessage(const char* message, bool ErrorFlag, const char* param1, double param2);
+	static void LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t* param1, double param2);
 };
-
 ATOM RegisterMainClass(HINSTANCE hInstance);
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
 BOOL WINAPI CnsHandler(DWORD dwCtrlType);
