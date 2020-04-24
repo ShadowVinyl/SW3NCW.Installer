@@ -26,34 +26,25 @@ wchar_t* GetXMLConfigFileName()
 }
 string ReadXMLConfigTag(const char* TagName)
 {
-	//wchar_t* filename = GetXMLConfigFileName();
-	xresult = xdoc.load_file(cfgFile);
+	wchar_t* filename = GetXMLConfigFileName();
+	xresult = xdoc.load_file(filename);
 	if (xresult)
 	{
 		xtag = xdoc.child("Config").child(TagName);
 		return xtag.text().as_string();
 	}
-	else
-	{
-		printf("PugiXML: Cant load config file for reading!");
-		return "";
-	}
+	return "";
 }
 bool WriteXMLConfigTag(const char* TagName, const char* TagContent)
 {
-	//wchar_t* filename = GetXMLConfigFileName();
-	xresult = xdoc.load_file(cfgFile);
+	wchar_t* filename = GetXMLConfigFileName();
+	xresult = xdoc.load_file(filename);
 	if (xresult)
 	{
 		xtag = xdoc.child("Config").child(TagName);
 		xtag.last_child().set_value(TagContent);
-		xdoc.save_file(cfgFile);
+		xdoc.save_file(filename);
+		return TRUE;
 	}
-	else
-	{
-		printf("PugiXML: Cant load config file for writting!");
-		return FALSE;
-	}
-
-	return TRUE;
+	return FALSE;
 }
