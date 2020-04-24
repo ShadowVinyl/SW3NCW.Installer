@@ -653,8 +653,8 @@ int  File::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 
 void LOG::InitLog()
 {
-	string xmltag = ReadXMLConfigTag("LogOutput");
-	if (xmltag != "True") return;
+	string xmltag = ReadXMLConfigTag("DisableLogging");
+	if (xmltag == "True") return;
 
 	char TextUI[10];
 	string xmltagUI = ReadXMLConfigTag("InterfaceLang");
@@ -686,8 +686,8 @@ void LOG::InitLog()
 }
 void LOG::LogMessage(const char* message, bool ErrorFlag, const char* param1, double param2)
 {
-	string xmltag = ReadXMLConfigTag("LogOutput");
-	if (xmltag != "True") return;
+	string xmltag = ReadXMLConfigTag("DisableLogging");
+	if (xmltag == "True") return;
 
 	const int MAXLEN = 80;
 	char stime[MAXLEN];
@@ -745,8 +745,8 @@ void LOG::LogMessage(const char* message, bool ErrorFlag, const char* param1, do
 }
 void LOG::LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t* param1, double param2)
 {
-	string xmltag = ReadXMLConfigTag("LogOutput");
-	if (xmltag != "True") return;
+	string xmltag = ReadXMLConfigTag("DisableLogging");
+	if (xmltag == "True") return;
 
 	const int MAXLEN = 80;
 	wchar_t stime[MAXLEN];
@@ -804,8 +804,8 @@ void LOG::LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t* para
 }
 void LOG::ReleaseLog()
 {
-	string xmltag = ReadXMLConfigTag("LogOutput");
-	if (xmltag != "True") return;
+	string xmltag = ReadXMLConfigTag("DisableLogging");
+	if (xmltag == "True") return;
 
 	const wchar_t* str = progver;
 	char buf[32];
