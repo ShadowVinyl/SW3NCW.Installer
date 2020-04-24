@@ -7,6 +7,7 @@
 #include <string>
 #include <shlobj.h>
 #include <stdio.h>
+#include <iostream>
 #include <fstream>
 #include <ctime>
 #include <curl/curl.h>
@@ -66,7 +67,7 @@ const char* FTP_URL		= "ftp://158.46.49.38/";
 const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
-const wchar_t* LogFile	= L"logfile.txt";
+const char* LogFile		= "logfile.txt";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
@@ -113,8 +114,8 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 	// and back to line begin - do not forget the fflush to avoid output buffering problems!
 	printf("]\r");
 	
-	
 	fflush(stdout);
+
 	// if you don't return 0, the transfer will be aborted - see the documentation
 	return 0;
 }
@@ -140,8 +141,7 @@ void Window::WindowMenu(HWND hWnd)
 		LPCWSTR text1;
 		LPCWSTR text2;
 		LPCWSTR text3;
-	};
-	texts text;
+	} text;
 	if (CurrentLang == 0)
 	{
 		text.text1 = L"Начать установку";
@@ -349,6 +349,7 @@ double File::FtpGetFileSize(char* FileName)
 	CURLcode res;
 	//long filetime = -1;
 	double filesize = 0.0;
+	double speed	= 0.0;
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -379,8 +380,7 @@ double File::FtpGetFileSize(char* FileName)
 				printf("File time %s: %s", FileName, ctime(&file_time));
 			}
 			*/
-			res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD,
-				&filesize);
+			res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
 			if ((CURLE_OK == res) && (filesize > 0.0))
 				printf("File size %s: %0.0f Kbytes\n", FileName, filesize / 1024);
 		}
@@ -549,6 +549,7 @@ bool File::FileDownload(char* FileName)
 			// Install the callback function
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
 			printf("\nDownload: %s\n", FileName);
+
 			LOG::LogMessage("[FileDownload] Download:", 0, FileName, 0);
 
 			int result = curl_easy_perform(curl);
@@ -662,9 +663,9 @@ void LOG::InitLog()
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
-	wcscat(selfdir, LogFile);
+	//wcscat(selfdir, LogFile);
 
-	FILE* out = _wfopen(selfdir, L"w");
+	FILE* out = fopen(LogFile, "w");
 	fprintf(out, "Log started: %s\n", ctime(&t));
 	fprintf(out, "Version: %s\n", version);
 	fprintf(out, "Interface: %s\n\n", TextUI);
@@ -680,13 +681,15 @@ void LOG::LogMessage(const char* message, int ErrorCode, const char* param1, int
 	time_t t = time(0);
 	strftime(s, MAXLEN, "%H:%M:%S", localtime(&t));
 
+	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
+	*/
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = fopen(LogFile, "a");
 	if (out)
 	{
 		if (!param1) param1 = "";
@@ -710,13 +713,15 @@ void LOG::LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param
 	time_t t = time(0);
 	wcsftime(s, MAXLEN, L"%H:%M:%S", localtime(&t));
 
+	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
+	*/
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = fopen(LogFile, "a");
 	if (out)
 	{
 		if (!param1) param1 = L"";
@@ -744,13 +749,15 @@ void LOG::ReleaseLog()
 
 	time_t t = time(0);
 
+	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
+	*/
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = fopen(LogFile, "a");
 	fprintf(out, "\nLog stopped: %s\n", ctime(&t));
 	fclose(out);
 }
