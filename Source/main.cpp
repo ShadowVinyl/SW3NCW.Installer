@@ -67,7 +67,7 @@ const char* FTP_URL		= "ftp://158.46.49.38/";
 const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
-const char* LogFile		= "logfile.txt";
+const wchar_t* LogFile	= L"logfile.txt";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
@@ -230,7 +230,7 @@ void Window::ChangeLanguage()
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"About");
 		str = L"Choose the localization:\0";
 		TextOutW(hdc, 10, 20, str, wcslen(str));
-		LOG::LogMessage("[Main] Change UI language: English", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Change UI language: English", 0, 0, 0);
 		WriteXMLConfigTag("InterfaceLang", "English");
 	}
 	else
@@ -241,7 +241,7 @@ void Window::ChangeLanguage()
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"О программе");
 		str = L"Выберите локализацию:\0";
 		TextOutW(hdc, 10, 20, str, wcslen(str));
-		LOG::LogMessage("[Main] Change UI language: Russian", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Change UI language: Russian", 0, 0, 0);
 		WriteXMLConfigTag("InterfaceLang", "Russian");
 	}
 }
@@ -303,15 +303,19 @@ int  File::FtpGetStatus()
 		{
 			Console::SetTextColor(2);
 			printf("Server is online!\n\n");
-			LOG::LogMessage("[FileDownload] Server is online.", 0, 0, 0);
+			LOG::LogMessage("(INFO) [FileDownload] Server is online.", 0, 0, 0);
 			Console::SetTextColor(15);
+			double connect;
+			result = curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &connect);
+			if (CURLE_OK == result)
+				LOG::LogMessage("(INFO) [FileDownload] Ping (ms):", 0, 0, connect / 1000);
 		}
 		else
 		{
 			Console::SetTextColor(4);
 			printf("Server is offline (CURL code: %d)\n", result);
 			Console::SetTextColor(15);
-			LOG::LogMessage("[FileDownload] Server is offline:", 1, 0, result);
+			LOG::LogMessage("(ERROR) [FileDownload] Server is offline:", 0, 0, result);
 		}
 		curl_easy_cleanup(curl);
 	}
@@ -325,7 +329,7 @@ int  File::FileSize(const char* FileName)
 	if (!file || file.bad())
 	{
 		printf("FileSize: cant open a file (C++ error code: %d)", GetLastError());
-		LOG::LogMessage("[FileSize] Cant open a file", 1, FileName, GetLastError());
+		LOG::LogMessage("(ERROR) [FileSize] Cant open a file", 1, FileName, 0);
 		return 0;
 	}
 
@@ -387,7 +391,7 @@ double File::FtpGetFileSize(char* FileName)
 		else {
 			/* we failed */
 			fprintf(stderr, "Failed to get file size (CURL code: %d)\n", res);
-			LOG::LogMessage("Failed to get file size:", 1, 0, res);
+			LOG::LogMessage("(ERROR) Failed to get file size:", 0, 0, res);
 		}
 
 		/* always cleanup */
@@ -404,11 +408,11 @@ void File::FileQueueSet(wchar_t* DestDir)
 	Beginning = TRUE;
 	Console::ShowConsole();
 	ShowWindow(hWnd, SW_HIDE);
-	LOG::LogMessage("[Main] A process was started.", 0, 0, 0);
+	LOG::LogMessage("(INFO) [Main] A process was started.", 0, 0, 0);
 	if (InstallLang == 1)
-		LOG::LogMessage("[Main] Use Russian version of mod.", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Use Russian version of mod.", 0, 0, 0);
 	else
-		LOG::LogMessage("[Main] Use English version of mod.", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Use English version of mod.", 0, 0, 0);
 
 	// Устанавливаем заданную директорию "по умолчанию"
 	wchar_t Destination[2048];
@@ -416,7 +420,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 	wcscat(Destination, L"DataTemp\\");
 	CreateDirectoryW(Destination, NULL);
 	SetCurrentDirectoryW(Destination);
-	LOG::LogMessage(L"[Main] Destination path:", 0, (LPCWSTR)Destination, 0);
+	LOG::LogMessage(L"(INFO) [Main] Destination path:", 0, (LPCWSTR)Destination, 0);
 
 	char* FileName;
 	char files_exe[][40] = {
@@ -454,8 +458,8 @@ void File::FileQueueSet(wchar_t* DestDir)
 		if (!FileOpen(FileName))
 		{
 			Console::SetTextColor(4);
-			printf("Error! File %s is not found in the destination directory! Installation is failed!\n", files_exe[i]);
-			LOG::LogMessage("[Main] File is not found in the destination directory:", 1, files_exe[i], 0);
+			printf("Error! File %s is not found in the destination directory! Installation is failed!\n", FileName);
+			LOG::LogMessage("(ERROR) [Main] File is not found in the destination directory:", 1, FileName, 0);
 			Console::SetTextColor(15);
 			QueueError = TRUE;
 			Sleep(2000);
@@ -470,7 +474,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 	SetCurrentDirectoryW(DestDir);
 	if (!QueueError)
 	{
-		LOG::LogMessage("[Windows Shell] Moving files into DATA folder...", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Windows Shell] Moving files into DATA folder...", 0, 0, 0);
 		wprintf(L"Moving files into DATA folder...\n");
 		Console::SetTextColor(14);
 		wprintf(L"Please, don't terminate the process to avoid mistakes!\n");
@@ -502,7 +506,7 @@ void File::FileQueueSet(wchar_t* DestDir)
 		else
 			wcscpy(text, L"Installation is done.");
 		MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONQUESTION);
-		LOG::LogMessage("[Main] Process was done successfully.\n", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Process was done successfully.\n", 0, 0, 0);
 	}
 	else
 	{
@@ -513,17 +517,17 @@ void File::FileQueueSet(wchar_t* DestDir)
 		else
 			wcscpy(text, L"Installation is failed. See logfile.txt for searching problems.");
 		MessageBoxW(hWnd, text, WINDOW_NAME, MB_OK | MB_ICONERROR);
-		LOG::LogMessage("[Main] Process was done with errors.\n", 0, 0, 0);
+		LOG::LogMessage("(INFO) [Main] Process was done with errors.\n", 0, 0, 0);
 	}
 	Beginning = FALSE;
 }
 bool File::FileDownload(char* FileName)
 {
 	printf("Load file %s from local server...\n", FileName);
-	LOG::LogMessage("[FileDownload] Load file from local server:", 0, FileName, 0);
+	LOG::LogMessage("(INFO) [FileDownload] Load file from local server:", 0, FileName, 0);
 
 	printf("Connect to local server...\n");
-	LOG::LogMessage("[FileDownload] Connect to local server...", 0, 0, 0);
+	LOG::LogMessage("(INFO) [FileDownload] Connect to local server...", 0, 0, 0);
 	int result = FtpGetStatus();
 	if (result != CURLE_OK)
 		return 0;
@@ -550,7 +554,7 @@ bool File::FileDownload(char* FileName)
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
 			printf("\nDownload: %s\n", FileName);
 
-			LOG::LogMessage("[FileDownload] Download:", 0, FileName, 0);
+			LOG::LogMessage("(INFO) [FileDownload] Download:", 0, FileName, 0);
 
 			int result = curl_easy_perform(curl);
 			if (result != CURLE_OK)
@@ -558,7 +562,7 @@ bool File::FileDownload(char* FileName)
 				Console::SetTextColor(4);
 				printf("Error! Host is offline (CURL code: %d).\nPlease try again later.\n", result);
 				Console::SetTextColor(15);
-				LOG::LogMessage("[FileDownload] Host is offline. Download is failed:", 1, 0, result);
+				LOG::LogMessage("(ERROR) [FileDownload] Host is offline. Download is failed:", 0, 0, result);
 				fclose(ofile);
 				remove(FileName);
 				curl_easy_cleanup(curl);
@@ -569,7 +573,16 @@ bool File::FileDownload(char* FileName)
 				printf("Progress: 100%%\n");
 				Console::SetTextColor(2);
 				printf("\nDownload: Ok!\n");
-				LOG::LogMessage("[FileDownload] Download: Ok!", 0, 0, 0);
+
+				double total;
+				result = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
+				if (result == CURLE_OK)
+					LOG::LogMessage("(INFO) [FileDownload] Download time (sec):", 0, 0, total);
+				result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD, &total);
+				if (result == CURLE_OK)
+					LOG::LogMessage("(INFO) [FileDownload] Download speed (Kbyte/s):", 0, 0, total/1024);
+
+				LOG::LogMessage("(INFO) [FileDownload] Download: Ok!", 0, 0, 0);
 			}
 			fclose(ofile);
 		}
@@ -589,12 +602,12 @@ bool File::FileOpen(char* FileName)
 	PROCESS_INFORMATION pi;
 
 	printf("\nStarting extraction...\n");
-	LOG::LogMessage("[FileOpen] Starting extraction:", 0, FileName, 0);
+	LOG::LogMessage("(INFO) [FileOpen] Starting extraction:", 0, FileName, 0);
 	if (!CreateProcessA((LPCSTR)FileName, NULL, NULL, NULL, FALSE, NULL, NULL, NULL, &cif, &pi))
 	{
 		Console::SetTextColor(4);
 		printf("Cant open a file (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[FileOpen] Cant open a file:", 1, FileName, GetLastError());
+		LOG::LogMessage("(ERROR) [FileOpen] Cant open a file:", 1, FileName, 0);
 		Console::SetTextColor(15);
 		return 0;
 	}
@@ -604,7 +617,7 @@ bool File::FileOpen(char* FileName)
 
 	Console::SetTextColor(2);
 	printf("Extraction is done.\n\n");
-	LOG::LogMessage("[FileOpen] Extraction is done:", 0, FileName, 0);
+	LOG::LogMessage("(INFO) [FileOpen] Extraction is done:", 0, FileName, 0);
 	Console::SetTextColor(15);
 	return 1;
 }
@@ -663,75 +676,129 @@ void LOG::InitLog()
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
-	//wcscat(selfdir, LogFile);
+	wcscat(selfdir, LogFile);
 
-	FILE* out = fopen(LogFile, "w");
+	FILE* out = _wfopen(selfdir, L"w");
 	fprintf(out, "Log started: %s\n", ctime(&t));
 	fprintf(out, "Version: %s\n", version);
 	fprintf(out, "Interface: %s\n\n", TextUI);
 	fclose(out);
 }
-void LOG::LogMessage(const char* message, int ErrorCode, const char* param1, int param2)
+void LOG::LogMessage(const char* message, bool ErrorFlag, const char* param1, double param2)
 {
 	string xmltag = ReadXMLConfigTag("LogOutput");
 	if (xmltag != "True") return;
 
 	const int MAXLEN = 80;
-	char s[MAXLEN];
+	char stime[MAXLEN];
 	time_t t = time(0);
-	strftime(s, MAXLEN, "%H:%M:%S", localtime(&t));
+	strftime(stime, MAXLEN, "(%H:%M:%S)", localtime(&t));
 
-	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
-	*/
 
-	FILE* out = fopen(LogFile, "a");
+	FILE* out = _wfopen(selfdir, L"a");
 	if (out)
 	{
-		if (!param1) param1 = "";
-		if (!param2) param2 = 0;
-		if (ErrorCode == 1)
-			fprintf(out, "(%s) (ERROR) %s %s %d\n", s, message, param1, param2);
-		else if (ErrorCode == 2)
-			fprintf(out, "(%s) (WARNING) %s %s\n", s, message, param1);
+		char format[256];
+		if (ErrorFlag)
+		{
+			if (param1)
+			{
+				strcpy(format, "%s %s %s %d\n");
+				fprintf(out, format, stime, message, param1, GetLastError());
+			}
+			else
+			{
+				strcpy(format, "%s %s %d\n");
+				fprintf(out, format, stime, message, GetLastError());
+			}
+		}
 		else
-			fprintf(out, "(%s) (INFO) %s %s\n", s, message, param1);
+		{
+			if (param1 && param2)
+			{
+				strcpy(format, "%s %s %s %.1f\n");
+				fprintf(out, format, stime, message, param1, param2);
+			}
+			else if (param1 && !param2)
+			{
+				strcpy(format, "%s %s %s\n");
+				fprintf(out, format, stime, message, param1);
+			}
+			else if(!param1 && param2)
+			{
+				strcpy(format, "%s %s %.1f\n");
+				fprintf(out, format, stime, message, param2);
+			}
+			else
+			{
+				strcpy(format, "%s %s\n");
+				fprintf(out, format, stime, message);
+			}
+		}
 		fclose(out);
 	}
 }
-void LOG::LogMessage(const wchar_t* message, int ErrorCode, const wchar_t* param1, int param2)
+void LOG::LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t* param1, double param2)
 {
 	string xmltag = ReadXMLConfigTag("LogOutput");
 	if (xmltag != "True") return;
 
 	const int MAXLEN = 80;
-	wchar_t s[MAXLEN];
+	wchar_t stime[MAXLEN];
 	time_t t = time(0);
-	wcsftime(s, MAXLEN, L"%H:%M:%S", localtime(&t));
+	wcsftime(stime, MAXLEN, L"(%H:%M:%S)", localtime(&t));
 
-	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
-	*/
 
-	FILE* out = fopen(LogFile, "a");
+	FILE* out = _wfopen(selfdir, L"a");
 	if (out)
 	{
-		if (!param1) param1 = L"";
-		if (!param2) param2 = 0;
-		if (ErrorCode == 1)
-			fwprintf(out, L"(%s) (ERROR) %s %s %d\n", s, message, param1, param2);
-		else if (ErrorCode == 2)
-			fwprintf(out, L"(%s) (WARNING) %s %s\n", s, message, param1);
+		wchar_t format[256];
+		if (ErrorFlag)
+		{
+			if (param1)
+			{
+				wcscpy(format, L"%s %s %s %d\n");
+				fwprintf(out, format, stime, message, param1, GetLastError());
+			}
+			else
+			{
+				wcscpy(format, L"%s %s %d\n");
+				fwprintf(out, format, stime, message, GetLastError());
+			}
+		}
 		else
-			fwprintf(out, L"(%s) (INFO) %s %s\n", s, message, param1);
+		{
+			if (param1 && param2)
+			{
+				wcscpy(format, L"%s %s %s %.1f\n");
+				fwprintf(out, format, stime, message, param1, param2);
+			}
+			else if (param1 && !param2)
+			{
+				wcscpy(format, L"%s %s %s\n");
+				fwprintf(out, format, stime, message, param1);
+			}
+			else if (!param1 && param2)
+			{
+				wcscpy(format, L"%s %s %.1f\n");
+				fwprintf(out, format, stime, message, param2);
+			}
+			else
+			{
+				wcscpy(format, L"%s %s\n");
+				fwprintf(out, format, stime, message);
+			}
+		}
 		fclose(out);
 	}
 }
@@ -749,15 +816,13 @@ void LOG::ReleaseLog()
 
 	time_t t = time(0);
 
-	/*
 	wchar_t selfdir[MAX_PATH] = { 0 };
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
 	wcscat(selfdir, L"\\\0");
 	wcscat(selfdir, LogFile);
-	*/
 
-	FILE* out = fopen(LogFile, "a");
+	FILE* out = _wfopen(selfdir, L"a");
 	fprintf(out, "\nLog stopped: %s\n", ctime(&t));
 	fclose(out);
 }
@@ -806,7 +871,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	if (!hWnd) {
 		Console::ShowConsole();
 		printf("InitInstance: Window creation is failed (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[Main] Window creation is failed:", 1, 0, GetLastError());
+		LOG::LogMessage("(ERROR) [Main] Window creation is failed:", 1, 0, 0);
 		MessageBox(NULL, L"Window creation is failed.", WINDOW_NAME, MB_OK | MB_ICONERROR);
 		return FALSE;
 	};
@@ -967,7 +1032,7 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 		case CTRL_CLOSE_EVENT:
 		{
 			if (Beginning)
-				LOG::LogMessage("[Main] A process was terminated by user prematurely!", 2, 0, 0);
+				LOG::LogMessage("(WARNING) [Main] A process was terminated by user prematurely!", 0, 0, 0);
 			Beginning = FALSE;
 			LOG::ReleaseLog();
 			FreeConsole();
@@ -978,65 +1043,10 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 	}
 }
 
-// Custom Entry Point for console/window app
-// WARNING: use different types of linker options (console app or windows app or set it to null) to prevent linker error
-#ifdef CONSOLEAPP
-int main(int argc, char** argv)
-{
-	LOG::InitLog();
-	LOG::LogMessage("[Main] InitWindow...", 0, 0, 0);
-
-	char title[500];
-	GetConsoleTitleA(title, 500);
-	SetConsoleCtrlHandler(CnsHandler, TRUE);
-
-	hWndConsole = FindWindowA(NULL, title);
-	ShowWindow(hWndConsole, SW_SHOWNORMAL);
-	hInstance = GetModuleHandle(NULL);
-	Console::HideConsole();
-	//MoveWindow(hWndConsole, 20, 20, 500, 500, true);  // test hwnd
-
-	if (!RegisterMainClass(hInstance)) {
-		Console::ShowConsole();
-		printf("RegisterMainClass: Class registation is failed (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[Main] Critical error in application (cannot register class) :", 1, 0, GetLastError());
-		MessageBox(NULL, L"Class registation is failed.", WINDOW_NAME, MB_OK | MB_ICONERROR);
-		return FALSE;
-	};
-	
-	if (!InitInstance(hInstance, SW_SHOWNORMAL))
-	{
-		Console::ShowConsole();
-		printf("InitInstance: Cannot init application (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[Main] Init application is failed:", 1, 0, GetLastError());
-		MessageBox(NULL, L"Init application is failed.", WINDOW_NAME, MB_OK | MB_ICONERROR);
-		return FALSE;
-	}
-
-	LOG::LogMessage("[Main] InitWindow: Ok!", 0, 0, 0);
-
-	// Цикл обработки сообщений
-	MSG msg = { 0 };
-
-	BOOL bRet;
-	while (bRet = GetMessage(&msg, NULL, 0, 0) != 0)
-	{
-		if (bRet != -1)
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-
-	LOG::ReleaseLog();
-	
-	return msg.wParam;
-}
-#else
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	LOG::InitLog();
-	LOG::LogMessage("[Main] InitWindow...", 0, 0, 0);
+	LOG::LogMessage("(INFO) [Main] InitWindow...", 0, 0, 0);
 
 	AllocConsole();
 	CnsOpen = freopen("CONOUT$", "w", stdout);
@@ -1055,7 +1065,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!RegisterMainClass(hInstance)) {
 		Console::ShowConsole();
 		printf("RegisterMainClass: Critical error (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[Main] Critical error in application (cannot register class) :", 1, 0, GetLastError());
+		LOG::LogMessage("(ERROR) [Main] Critical error in application (cannot register class) :", 1, 0, 0);
 		return FALSE;
 	};
 
@@ -1063,12 +1073,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		Console::ShowConsole();
 		printf("InitInstance: Cannot init application (C++ error code: %d)\n", GetLastError());
-		LOG::LogMessage("[Main] Init application is failed:", 1, 0, GetLastError());
+		LOG::LogMessage("(ERROR) [Main] Init application is failed:", 1, 0, 0);
 		MessageBox(NULL, L"Init application is failed.", WINDOW_NAME, MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 
-	LOG::LogMessage("[Main] InitWindow: Ok!", 0, 0, 0);
+	LOG::LogMessage("(INFO) [Main] InitWindow: Ok!", 0, 0, 0);
 
 	// Message loop
 	MSG msg = { 0 };
@@ -1085,4 +1095,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return msg.wParam;
 }
-#endif
