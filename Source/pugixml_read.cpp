@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <fstream>
 #include <Shlwapi.h>
 #include "pugixml.hpp"
 
@@ -27,8 +26,8 @@ wchar_t* GetXMLConfigFileName()
 }
 string ReadXMLConfigTag(const char* TagName)
 {
-	wchar_t* filename = GetXMLConfigFileName();
-	xresult = xdoc.load_file(filename);
+	//wchar_t* filename = GetXMLConfigFileName();
+	xresult = xdoc.load_file(cfgFile);
 	if (xresult)
 	{
 		xtag = xdoc.child("Config").child(TagName);
@@ -37,24 +36,24 @@ string ReadXMLConfigTag(const char* TagName)
 	else
 	{
 		printf("PugiXML: Cant load config file for reading!");
-		return NULL;
+		return "";
 	}
 }
-string WriteXMLConfigTag(const char* TagName, const char* TagContent)
+bool WriteXMLConfigTag(const char* TagName, const char* TagContent)
 {
-	wchar_t* filename = GetXMLConfigFileName();
-	xresult = xdoc.load_file(filename);
+	//wchar_t* filename = GetXMLConfigFileName();
+	xresult = xdoc.load_file(cfgFile);
 	if (xresult)
 	{
 		xtag = xdoc.child("Config").child(TagName);
 		xtag.last_child().set_value(TagContent);
-		xdoc.save_file(filename);
+		xdoc.save_file(cfgFile);
 	}
 	else
 	{
 		printf("PugiXML: Cant load config file for writting!");
-		return NULL;
+		return FALSE;
 	}
 
-	return "";
+	return TRUE;
 }
