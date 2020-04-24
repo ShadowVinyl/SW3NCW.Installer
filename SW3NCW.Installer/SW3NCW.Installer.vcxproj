@@ -84,6 +84,8 @@
     <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib</LibraryPath>
     <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
     <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib</LibraryWPath>
+    <CopyLocalProjectReference>false</CopyLocalProjectReference>
+    <IntDir>$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
