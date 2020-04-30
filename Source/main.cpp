@@ -15,11 +15,7 @@
 #pragma comment(lib,"Shlwapi.lib")
 #pragma comment(lib,"zlib.lib")
 #pragma comment(lib,"pugixml.lib")
-#if defined(_WIN64) && defined(USE_DLL) 
-#pragma comment(lib,"lib-dll/libcurl.dll.a")
-#else
 #pragma comment(lib,"libcurl.lib")
-#endif
 
 // Заставляем линкер генерировать манифест визуальных стилей окон
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
