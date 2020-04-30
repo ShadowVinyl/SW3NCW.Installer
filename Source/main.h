@@ -1,7 +1,6 @@
 #pragma once
 
 #include "resource.h"
-#include "pugixml_read.h"
 #include "FileClass.h"
 #include "CnsClass.h"
 #include "LogClass.h"
@@ -9,8 +8,8 @@
 class Window
 {
 public:
-	static void ChangeLanguage();
-	static void EnableButtons(bool Flag);
+	void ChangeLanguage();
+	void EnableButtons(bool Flag);
 	static void WindowMenu(HWND hWnd);
 	static bool BrowseForFolder();
 };

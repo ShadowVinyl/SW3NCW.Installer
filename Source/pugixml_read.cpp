@@ -13,7 +13,7 @@ pugi::xml_document xdoc;
 pugi::xml_parse_result xresult;
 pugi::xml_node xtag;
 
-const wchar_t* cfgFile = L"config.xml";
+const wchar_t* cfgFile = L"filecfg.xml";
 
 wchar_t* GetXMLConfigFileName()
 {

@@ -2,7 +2,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable:4996)
 #endif
-#define CURL_STATICLIB
 
 #include <Windows.h>
 #include <stdio.h>
@@ -42,7 +41,7 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 
 	double fractiondownloaded = NowDownloaded / TotalToDownload;
 
-	printf("Progress: %3.0f%% [", fractiondownloaded * 100);
+	printf("Progress: %3.1f%% [", fractiondownloaded * 100);
 
 	// create the "meter"
 
@@ -50,7 +49,7 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 	// how wide you want the progress meter to be
 	int totaldotz = 30;
 	// part of the progressmeter that's already "full"
-	int dotz = round(fractiondownloaded * totaldotz);
+	double dotz = round(fractiondownloaded * totaldotz);
 	// part  that's full already
 	for (; ii < dotz; ii++) {
 		printf("=");
@@ -70,16 +69,14 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 
 int  FileClass::FtpGetStatus()
 {
-	CURL* curl;
-	CURLcode result;
 	curl_global_init(CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
+	CURL* curl = curl_easy_init();
 	if (curl)
 	{
 		curl_easy_setopt(curl, CURLOPT_URL, FTP_URL);
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3);
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
-		result = curl_easy_perform(curl);
+		CURLcode result = curl_easy_perform(curl);
 
 		if (result == CURLE_OK)
 		{
@@ -100,9 +97,10 @@ int  FileClass::FtpGetStatus()
 			LogClass::LogMessage("(ERROR) [FileDownload] Server is offline:", 0, 0, result);
 		}
 		curl_easy_cleanup(curl);
+		curl_global_cleanup();
+		return result;
 	}
-	curl_global_cleanup();
-	return result;
+	return 0;
 }
 int  FileClass::FileSize(const char* FileName)
 {
@@ -131,15 +129,14 @@ bool FileClass::FileExists(const char* FileName)
 }
 double FileClass::FtpGetFileSize(char* FileName)
 {
-	CURL* curl;
-	CURLcode res;
+	CURLcode result;
 	//long filetime = -1;
 	double filesize = 0.0;
 	double speed = 0.0;
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
-	curl = curl_easy_init();
+	CURL* curl = curl_easy_init();
 	if (curl) {
 
 		char Host[50];
@@ -156,9 +153,9 @@ double FileClass::FtpGetFileSize(char* FileName)
 		/* Switch on full protocol/debug output */
 		/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); */
 
-		res = curl_easy_perform(curl);
+		result = curl_easy_perform(curl);
 
-		if (res == CURLE_OK) {
+		if (result == CURLE_OK) {
 			/*
 			res = curl_easy_getinfo(curl, CURLINFO_FILETIME, &filetime);
 			if ((CURLE_OK == res) && (filetime >= 0)) {
@@ -166,14 +163,14 @@ double FileClass::FtpGetFileSize(char* FileName)
 				printf("File time %s: %s", FileName, ctime(&file_time));
 			}
 			*/
-			res = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
-			if ((CURLE_OK == res) && (filesize > 0.0))
+			result = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
+			if ((result == CURLE_OK) && (filesize > 0.0))
 				printf("File size %s: %0.0f Kbytes\n", FileName, filesize / 1024);
 		}
-		else {
-			/* we failed */
-			fprintf(stderr, "Failed to get file size (CURL code: %d)\n", res);
-			LogClass::LogMessage("(ERROR) Failed to get file size:", 0, 0, res);
+		else
+		{
+			fprintf(stderr, "Failed to get file size (CURL code: %d)\n", result);
+			LogClass::LogMessage("(ERROR) Failed to get file size:", 0, 0, result);
 		}
 
 		/* always cleanup */
@@ -331,6 +328,7 @@ bool FileClass::FileDownload(char* FileName)
 			curl_easy_setopt(curl, CURLOPT_URL, Host);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, ofile);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteData);
+			//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
 			// Install the callback function
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
@@ -352,7 +350,7 @@ bool FileClass::FileDownload(char* FileName)
 			}
 			else
 			{
-				printf("Progress: 100%%\n");
+				printf("Progress: 100.0%%\n");
 				CnsClass::SetTextColor(2);
 				printf("\nDownload: Ok!\n");
 

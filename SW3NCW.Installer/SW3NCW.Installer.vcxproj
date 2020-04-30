@@ -89,6 +89,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>$(Platform)-$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib\x64</LibraryPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib\x64</LibraryWPath>
+    <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -142,6 +148,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Source\lib</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
+      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
     </Link>
     <ResourceCompile>
       <ResourceOutputFileName>Res.rc</ResourceOutputFileName>
@@ -150,29 +157,44 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OmitFramePointers>false</OmitFramePointers>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\lib\x64</AdditionalLibraryDirectories>
+      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Source\CnsClass.h" />
+    <ClInclude Include="..\Source\FileClass.h" />
     <ClInclude Include="..\Source\include\pugiconfig.hpp" />
     <ClInclude Include="..\Source\include\pugixml.hpp" />
+    <ClInclude Include="..\Source\LogClass.h" />
     <ClInclude Include="..\Source\main.h" />
     <ClInclude Include="..\Source\pugixml_read.h" />
     <ClInclude Include="..\Source\resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source\CnsClass.cpp" />
+    <ClCompile Include="..\Source\FileClass.cpp" />
     <ClCompile Include="..\Source\include\pugixml.cpp" />
+    <ClCompile Include="..\Source\LogClass.cpp" />
     <ClCompile Include="..\Source\main.cpp" />
     <ClCompile Include="..\Source\pugixml_read.cpp" />
   </ItemGroup>

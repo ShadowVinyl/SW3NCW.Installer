@@ -7,13 +7,19 @@
 #include "pugixml_read.h"
 #include "main.h"
 
+#define CURL_STATICLIB
+
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4302)
 
 #pragma comment(lib,"Shlwapi.lib")
 #pragma comment(lib,"zlib.lib")
-#pragma comment(lib,"libcurl.lib")
 #pragma comment(lib,"pugixml.lib")
+#if defined(_WIN64) && defined(USE_DLL) 
+#pragma comment(lib,"lib-dll/libcurl.dll.a")
+#else
+#pragma comment(lib,"libcurl.lib")
+#endif
 
 // Заставляем линкер генерировать манифест визуальных стилей окон
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -55,12 +61,11 @@ const wchar_t* WndName  = L"Star Wolves 3: New Civil War Installer";
 const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
-const wchar_t* LogFile	= L"logfile.txt";
+const wchar_t* LogFile	= L"filelog.txt";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
 int CurrentLang;
-FILE* CnsOpen;
 
 void Window::WindowMenu(HWND hWnd)
 {
@@ -68,7 +73,8 @@ void Window::WindowMenu(HWND hWnd)
 		LPCWSTR text1;
 		LPCWSTR text2;
 		LPCWSTR text3;
-	} text;
+	};
+	texts text;
 	if (CurrentLang == 0)
 	{
 		text.text1 = L"Начать установку";
@@ -431,7 +437,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	LogClass::LogMessage("(INFO) [Main] InitWindow...", 0, 0, 0);
 
 	AllocConsole();
-	CnsOpen = freopen("CONOUT$", "w", stdout);
+	FILE* CnsOpen = freopen("CONOUT$", "w", stdout);
 	SetConsoleCtrlHandler(CnsHandler, TRUE);
 	CnsClass::HideConsole();
 
