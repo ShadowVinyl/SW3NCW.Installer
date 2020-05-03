@@ -52,8 +52,12 @@ HDC hdc;
 
 LPCWSTR FontName[]		= { L"Verdana" };
 
+#if defined(_WIN64)
+const wchar_t* WndName  = L"Star Wolves 3: New Civil War Installer (x64)";
+#else
+const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer (x86)";
+#endif
 const char* FTP_URL		= "ftp://158.46.49.38/";
-const wchar_t* WndName  = L"Star Wolves 3: New Civil War Installer";
 const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
@@ -337,9 +341,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				(TCHAR)SendMessage((HWND)lParam, (UINT)CB_GETLBTEXT, (WPARAM)ItemIndex, (LPARAM)ListItem);
 				wcscat((LPWSTR)ListItem, L"\0");
 				if (wcslen((LPWSTR)ListItem) == wcslen(Lang2))
-					InstallLang = 2;
-				else
 					InstallLang = 1;
+				else
+					InstallLang = 0;
 			}
 			if (LOWORD(wParam) == ID_START)
 				Window::BrowseForFolder();
@@ -369,14 +373,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		}
 		case WM_DESTROY:
 		{
-			if (FileClass::FileExists("1_temp.exe") == 1)
-				DeleteFileA("1_temp.exe");
-			if (FileClass::FileExists("2_temp.exe") == 1)
-				DeleteFileA("2_temp.exe");
-			if (FileClass::FileExists("3_temp.exe") == 1)
-				DeleteFileA("3_temp.exe");
-			if (FileClass::FileExists("4_temp.exe") == 1)
-				DeleteFileA("4_temp.exe");
+			FileClass::FilesDelete();
 			LogClass::ReleaseLog();
 			PostQuitMessage(0);
 			break;
@@ -416,8 +413,11 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 		case CTRL_CLOSE_EVENT:
 		{
 			if (Beginning)
+			{
+				FileClass::FilesDelete();
 				LogClass::LogMessage("(WARNING) [Main] A process was terminated by user prematurely!", 0, 0, 0);
-			Beginning = FALSE;
+				Beginning = FALSE;
+			}
 			LogClass::ReleaseLog();
 			FreeConsole();
 			return TRUE;

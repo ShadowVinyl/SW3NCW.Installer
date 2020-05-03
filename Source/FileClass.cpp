@@ -430,3 +430,16 @@ int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 
 	return result;
 }
+
+void FileClass::FilesDelete()
+{
+	if (FileExists("1_temp.exe") == 1)
+		DeleteFileA("1_temp.exe");
+	if (FileExists("2_temp.exe") == 1)
+		DeleteFileA("2_temp.exe");
+	if (FileExists("3_temp.exe") == 1)
+		DeleteFileA("3_temp.exe");
+	if (FileExists("4_temp.exe") == 1)
+		DeleteFileA("4_temp.exe");
+	return;
+}
