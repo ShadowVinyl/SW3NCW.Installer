@@ -17,11 +17,11 @@ extern const wchar_t* LogFile;
 
 void LogClass::InitLog()
 {
-	string xmltag = ReadXMLConfigTag("DisableLogging");
+	std::string xmltag = ReadXMLConfigTag("DisableLogging");
 	if (xmltag == "True") return;
 
 	char TextUI[10];
-	string xmltagUI = ReadXMLConfigTag("InterfaceLang");
+	std::string xmltagUI = ReadXMLConfigTag("InterfaceLang");
 	if (xmltagUI == "Russian" || xmltagUI != "English")
 		strcpy(TextUI, "Russian");
 	else
@@ -48,9 +48,9 @@ void LogClass::InitLog()
 	fprintf(out, "Interface: %s\n\n", TextUI);
 	fclose(out);
 }
-void LogClass::LogMessage(const char* message, bool ErrorFlag, const char* param1, double param2)
+void LogClass::LOG(const char* format, ...)
 {
-	string xmltag = ReadXMLConfigTag("DisableLogging");
+	std::string xmltag = ReadXMLConfigTag("DisableLogging");
 	if (xmltag == "True") return;
 
 	const int MAXLEN = 80;
@@ -67,49 +67,18 @@ void LogClass::LogMessage(const char* message, bool ErrorFlag, const char* param
 	FILE* out = _wfopen(selfdir, L"a");
 	if (out)
 	{
-		char format[256];
-		if (ErrorFlag)
-		{
-			if (param1)
-			{
-				strcpy(format, "%s %s %s %d\n");
-				fprintf(out, format, stime, message, param1, GetLastError());
-			}
-			else
-			{
-				strcpy(format, "%s %s %d\n");
-				fprintf(out, format, stime, message, GetLastError());
-			}
-		}
-		else
-		{
-			if (param1 && param2)
-			{
-				strcpy(format, "%s %s %s %.1f\n");
-				fprintf(out, format, stime, message, param1, param2);
-			}
-			else if (param1 && !param2)
-			{
-				strcpy(format, "%s %s %s\n");
-				fprintf(out, format, stime, message, param1);
-			}
-			else if (!param1 && param2)
-			{
-				strcpy(format, "%s %s %.1f\n");
-				fprintf(out, format, stime, message, param2);
-			}
-			else
-			{
-				strcpy(format, "%s %s\n");
-				fprintf(out, format, stime, message);
-			}
-		}
+		va_list args;
+		va_start(args, format);
+		fprintf(out, "%s ", stime);
+		vfprintf(out, format, args);
+		fprintf(out, "\n");
+		va_end(args);
 		fclose(out);
 	}
 }
-void LogClass::LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t* param1, double param2)
+void LogClass::LOG(const wchar_t* format, ...)
 {
-	string xmltag = ReadXMLConfigTag("DisableLogging");
+	std::string xmltag = ReadXMLConfigTag("DisableLogging");
 	if (xmltag == "True") return;
 
 	const int MAXLEN = 80;
@@ -126,49 +95,18 @@ void LogClass::LogMessage(const wchar_t* message, bool ErrorFlag, const wchar_t*
 	FILE* out = _wfopen(selfdir, L"a");
 	if (out)
 	{
-		wchar_t format[256];
-		if (ErrorFlag)
-		{
-			if (param1)
-			{
-				wcscpy(format, L"%s %s %s %d\n");
-				fwprintf(out, format, stime, message, param1, GetLastError());
-			}
-			else
-			{
-				wcscpy(format, L"%s %s %d\n");
-				fwprintf(out, format, stime, message, GetLastError());
-			}
-		}
-		else
-		{
-			if (param1 && param2)
-			{
-				wcscpy(format, L"%s %s %s %.1f\n");
-				fwprintf(out, format, stime, message, param1, param2);
-			}
-			else if (param1 && !param2)
-			{
-				wcscpy(format, L"%s %s %s\n");
-				fwprintf(out, format, stime, message, param1);
-			}
-			else if (!param1 && param2)
-			{
-				wcscpy(format, L"%s %s %.1f\n");
-				fwprintf(out, format, stime, message, param2);
-			}
-			else
-			{
-				wcscpy(format, L"%s %s\n");
-				fwprintf(out, format, stime, message);
-			}
-		}
+		va_list args;
+		va_start(args, format);
+		fwprintf(out, L"%s ", stime);
+		vfwprintf(out, format, args);
+		fwprintf(out, L"\n");
+		va_end(args);
 		fclose(out);
 	}
 }
 void LogClass::ReleaseLog()
 {
-	string xmltag = ReadXMLConfigTag("DisableLogging");
+	std::string xmltag = ReadXMLConfigTag("DisableLogging");
 	if (xmltag == "True") return;
 
 	const wchar_t* str = progver;

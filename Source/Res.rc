@@ -101,14 +101,18 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Dialog
+// Диалоговое окно
 //
 
-IDD_FORMVIEW DIALOGEX 0, 0, 185, 93
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-FONT 8, "MS Shell Dlg", 400, 0, 0x0
+IDD_ABOUTBOX DIALOGEX 100, 100, 200, 60
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Star Wolves 3: New Civil War Installer"
+FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT           "TODO: представление формы макета",IDC_STATIC,55,42,74,26
+ICON            IDR_MAINFRAME, IDC_STATIC, 14, 14, 21, 20
+LTEXT           "Star Wolves 3: New Civil War Installer, Ver 1.5", IDC_STATIC, 42, 14, 154, 8, SS_NOPREFIX
+LTEXT           "(c) by Aleksey_SR, 2020", IDC_STATIC, 42, 26, 114, 8
+DEFPUSHBUTTON   "ОК", IDOK, 80, 41, 50, 14, WS_GROUP
 END
 
 

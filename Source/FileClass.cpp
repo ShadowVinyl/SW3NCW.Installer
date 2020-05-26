@@ -4,7 +4,7 @@
 #endif
 
 #include <Windows.h>
-#include <stdio.h>
+#include <cstdio>
 #include <fstream>
 #include <curl/curl.h>
 
@@ -41,7 +41,7 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 
 	double fractiondownloaded = NowDownloaded / TotalToDownload;
 
-	printf("Progress: %3.1f%% [", fractiondownloaded * 100);
+	printf("Progress: %5.1f%% [", fractiondownloaded * 100);
 
 	// create the "meter"
 
@@ -69,6 +69,7 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 
 int  FileClass::FtpGetStatus()
 {
+	CURLcode result;
 	curl_global_init(CURL_GLOBAL_ALL);
 	CURL* curl = curl_easy_init();
 	if (curl)
@@ -76,61 +77,54 @@ int  FileClass::FtpGetStatus()
 		curl_easy_setopt(curl, CURLOPT_URL, FTP_URL);
 		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3);
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
-		CURLcode result = curl_easy_perform(curl);
+		result = curl_easy_perform(curl);
 
 		if (result == CURLE_OK)
 		{
-			CnsClass::SetTextColor(2);
-			printf("Server is online!\n\n");
-			LogClass::LogMessage("(INFO) [FileDownload] Server is online.", 0, 0, 0);
-			CnsClass::SetTextColor(15);
-			double connect;
-			result = curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &connect);
-			if (CURLE_OK == result)
-				LogClass::LogMessage("(INFO) [FileDownload] Ping (ms):", 0, 0, connect / 1000);
+			CnsClass::Print("Green", "Server is online!\n");
+			LogClass::LOG("(INFO) [FileDownload] Server is online.");
 		}
 		else
 		{
-			CnsClass::SetTextColor(4);
-			printf("Server is offline (CURL code: %d)\n", result);
-			CnsClass::SetTextColor(15);
-			LogClass::LogMessage("(ERROR) [FileDownload] Server is offline:", 0, 0, result);
+			CnsClass::Print("Green", "Server is offline (%d)", result);
+			LogClass::LOG("(ERROR) [FileDownload] Server is offline (%d)", result);
 		}
 		curl_easy_cleanup(curl);
 		curl_global_cleanup();
-		return result;
 	}
-	return 0;
+	return result;
 }
-int  FileClass::FileSize(const char* FileName)
+long FileClass::FileSize(const char* FileName)
 {
-	std::fstream file;
-	file.open(FileName);
-	if (!file || file.bad())
+	FILE* file = fopen(FileName, "rb");
+	if (!file)
 	{
-		printf("FileSize: cant open a file (C++ error code: %d)", GetLastError());
-		LogClass::LogMessage("(ERROR) [FileSize] Cant open a file", 1, FileName, 0);
+		CnsClass::Print("Red", "FileSize: cant open a file (%d)", GetLastError());
+		LogClass::LOG("(ERROR) [FileSize] Cant open a file %s (%d)", FileName, GetLastError());
 		return 0;
 	}
+	fseek(file, 0L, SEEK_END);
+	long size = ftell(file);
+	fclose(file);
 
-	int size = 0;
-	file.seekg(0, std::ios::end);
-	size = file.tellg();
-	file.close();
 	return size;
 }
 bool FileClass::FileExists(const char* FileName)
 {
-	std::ifstream file;
-	file.open(FileName);
-	if (!file || file.bad()) return 0;
-	file.close();
+	FILE* file = fopen(FileName, "rb");
+	if (!file)
+	{
+		CnsClass::Print("Red", "FileExists: cant find %s on this adress (%d)", GetLastError());
+		LogClass::LOG("(ERROR) [FileExists] cant find %s on this adress (%d)", FileName, GetLastError());
+		return 0;
+	}
+	fclose(file);
+
 	return 1;
 }
-double FileClass::FtpGetFileSize(char* FileName)
+double FileClass::FtpGetFileSize(const char* FileName)
 {
 	CURLcode result;
-	//long filetime = -1;
 	double filesize = 0.0;
 	double speed = 0.0;
 
@@ -144,36 +138,22 @@ double FileClass::FtpGetFileSize(char* FileName)
 		strcat(Host, FileName);
 
 		curl_easy_setopt(curl, CURLOPT_URL, Host);
-		/* No download if the file */
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-		/* Ask for filetime */
-		//curl_easy_setopt(curl, CURLOPT_FILETIME, 1L);
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, CurlGetSize);
 		curl_easy_setopt(curl, CURLOPT_HEADER, 0L);
-		/* Switch on full protocol/debug output */
-		/* curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); */
 
 		result = curl_easy_perform(curl);
 
 		if (result == CURLE_OK) {
-			/*
-			res = curl_easy_getinfo(curl, CURLINFO_FILETIME, &filetime);
-			if ((CURLE_OK == res) && (filetime >= 0)) {
-				time_t file_time = (time_t)filetime;
-				printf("File time %s: %s", FileName, ctime(&file_time));
-			}
-			*/
 			result = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
 			if ((result == CURLE_OK) && (filesize > 0.0))
-				printf("File size %s: %0.0f Kbytes\n", FileName, filesize / 1024);
+				CnsClass::Print(NULL, "File size %s: %0.0f Kbytes", FileName, filesize / 1024);
 		}
 		else
 		{
-			fprintf(stderr, "Failed to get file size (CURL code: %d)\n", result);
-			LogClass::LogMessage("(ERROR) Failed to get file size:", 0, 0, result);
+			CnsClass::Print("Red", "Failed to get file size (%d)", result);
+			LogClass::LOG("(ERROR) Failed to get file size (%d)", result);
 		}
-
-		/* always cleanup */
 		curl_easy_cleanup(curl);
 	}
 
@@ -181,132 +161,12 @@ double FileClass::FtpGetFileSize(char* FileName)
 
 	return filesize;
 }
-//
-void FileClass::FileQueueSet(wchar_t* DestDir)
+
+bool FileClass::FileDownload(const char* FileName)
 {
-	Beginning = TRUE;
-	CnsClass::ShowConsole();
-	ShowWindow(hWnd, SW_HIDE);
-	LogClass::LogMessage("(INFO) [Main] A process was started.", 0, 0, 0);
-	if (InstallLang == 1)
-		LogClass::LogMessage("(INFO) [Main] Use Russian version of mod.", 0, 0, 0);
-	else
-		LogClass::LogMessage("(INFO) [Main] Use English version of mod.", 0, 0, 0);
+	CnsClass::Print(NULL, "Load file %s from local server...\n", FileName);
+	LogClass::LOG("(INFO) [FileDownload] Load %s from local server.", FileName);
 
-	// Устанавливаем заданную директорию "по умолчанию"
-	wchar_t Destination[2048];
-	wcscpy(Destination, DestDir);
-	wcscat(Destination, L"DataTemp\\");
-	CreateDirectoryW(Destination, NULL);
-	SetCurrentDirectoryW(Destination);
-	LogClass::LogMessage(L"(INFO) [Main] Destination path:", 0, (LPCWSTR)Destination, 0);
-
-	char* FileName;
-	char files_exe[][40] = {
-		"1_temp.exe",
-		"2_temp.exe",
-		"3_temp.exe",
-	};
-
-	for (int i = 0; i < 4; i++)
-	{
-		if (i != 3)
-			FileName = files_exe[i];
-		else
-		{
-			if (InstallLang == 1)
-				FileName = (char*)"4_temp_rus.exe";
-			else
-				FileName = (char*)"4_temp_eng.exe";
-		}
-
-		system("cls");
-		CnsClass::SetTextColor(14);
-		wprintf(L"Destination: %s\n", Destination);
-		printf("File name: %s\n\n", FileName);
-		CnsClass::SetTextColor(15);
-
-		if (!FileDownload(FileName))
-		{
-			QueueError = TRUE;
-			Sleep(2000);
-			break;
-		}
-
-		Sleep(2000);
-		if (!FileOpen(FileName))
-		{
-			CnsClass::SetTextColor(4);
-			printf("Error! File %s is not found in the destination directory! Installation is failed!\n", FileName);
-			LogClass::LogMessage("(ERROR) [Main] File is not found in the destination directory:", 1, FileName, 0);
-			CnsClass::SetTextColor(15);
-			QueueError = TRUE;
-			Sleep(2000);
-			break;
-		}
-
-		Sleep(1000);
-		DeleteFileA(FileName);
-	}
-
-	system("cls");
-	SetCurrentDirectoryW(DestDir);
-	if (!QueueError)
-	{
-		LogClass::LogMessage("(INFO) [Windows Shell] Moving files into DATA folder...", 0, 0, 0);
-		wprintf(L"Moving files into DATA folder...\n");
-		CnsClass::SetTextColor(14);
-		wprintf(L"Please, don't terminate the process to avoid mistakes!\n");
-		CnsClass::SetTextColor(15);
-		if (!ShellMoveFiles(L"DataTemp\\Data\\*\0", L"Data\0"))
-		{
-			QueueError = TRUE;
-			Sleep(2000);
-		}
-		else
-		{
-			CnsClass::SetTextColor(2);
-			wprintf(L"Moving files into DATA folder: Ok!\n");
-			CnsClass::SetTextColor(15);
-		}
-	}
-
-	RemoveDirectoryW(L"DataTemp\\Data");
-	RemoveDirectoryW(L"DataTemp");
-
-	Sleep(2000);
-	ShowWindow(hWnd, SW_SHOW);
-	CnsClass::HideConsole();
-	if (!QueueError)
-	{
-		wchar_t text[25];
-		if (CurrentLang == 0)
-			wcscpy(text, L"Установка завершена.");
-		else
-			wcscpy(text, L"Installation is done.");
-		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONQUESTION);
-		LogClass::LogMessage("(INFO) [Main] Process was done successfully.\n", 0, 0, 0);
-	}
-	else
-	{
-		QueueError = FALSE;
-		wchar_t text[80];
-		if (CurrentLang == 0)
-			wcscpy(text, L"Установка завершена с ошибками. Проверьте logfile.txt для поиска проблемы.");
-		else
-			wcscpy(text, L"Installation is failed. See logfile.txt for searching problems.");
-		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONERROR);
-		LogClass::LogMessage("(INFO) [Main] Process was done with errors.\n", 0, 0, 0);
-	}
-	Beginning = FALSE;
-}
-bool FileClass::FileDownload(char* FileName)
-{
-	printf("Load file %s from local server...\n", FileName);
-	LogClass::LogMessage("(INFO) [FileDownload] Load file from local server:", 0, FileName, 0);
-
-	printf("Connect to local server...\n");
-	LogClass::LogMessage("(INFO) [FileDownload] Connect to local server...", 0, 0, 0);
 	int result = FtpGetStatus();
 	if (result != CURLE_OK)
 		return 0;
@@ -332,17 +192,15 @@ bool FileClass::FileDownload(char* FileName)
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
 			// Install the callback function
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
-			printf("\nDownload: %s\n", FileName);
 
-			LogClass::LogMessage("(INFO) [FileDownload] Download:", 0, FileName, 0);
+			CnsClass::Print(NULL, "\nDownload: %s", FileName);
+			LogClass::LOG("(INFO) [FileDownload] Download: %s", FileName);
 
 			int result = curl_easy_perform(curl);
 			if (result != CURLE_OK)
 			{
-				CnsClass::SetTextColor(4);
-				printf("Error! Host is offline (CURL code: %d).\nPlease try again later.\n", result);
-				CnsClass::SetTextColor(15);
-				LogClass::LogMessage("(ERROR) [FileDownload] Host is offline. Download is failed:", 0, 0, result);
+				CnsClass::Print("Red", "Error! Host is offline (%d).\nPlease try again later.", result);
+				LogClass::LOG("(ERROR) [FileDownload] Download is failed (%d)", result);
 				fclose(ofile);
 				remove(FileName);
 				curl_easy_cleanup(curl);
@@ -350,19 +208,17 @@ bool FileClass::FileDownload(char* FileName)
 			}
 			else
 			{
-				printf("Progress: 100.0%%\n");
-				CnsClass::SetTextColor(2);
-				printf("\nDownload: Ok!\n");
+				CnsClass::Print(NULL, "Progress: 100.0%%");
 
 				double total;
 				result = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 				if (result == CURLE_OK)
-					LogClass::LogMessage("(INFO) [FileDownload] Download time (sec):", 0, 0, total);
+					LogClass::LOG("(INFO) [FileDownload] Download time (sec): %.1f", total);
 				result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD, &total);
 				if (result == CURLE_OK)
-					LogClass::LogMessage("(INFO) [FileDownload] Download speed (Kbyte/s):", 0, 0, total / 1024);
+					LogClass::LOG("(INFO) [FileDownload] Download speed (Kbyte/s): %.1f", total / 1024);
 
-				LogClass::LogMessage("(INFO) [FileDownload] Download: Ok!", 0, 0, 0);
+				LogClass::LOG("(INFO) [FileDownload] Download: Ok!", 0, 0, 0);
 			}
 			fclose(ofile);
 		}
@@ -371,34 +227,29 @@ bool FileClass::FileDownload(char* FileName)
 		curl_easy_cleanup(curl);
 	}
 
-	printf("Load file %s from local server: Ok!\n", FileName);
-	CnsClass::SetTextColor(15);
+	CnsClass::Print("Green", "Load file %s from local server: Ok!", FileName);
 	return 1;
 }
-bool FileClass::FileOpen(char* FileName)
+bool FileClass::FileOpen(const char* FileName)
 {
 	STARTUPINFOA cif;
 	ZeroMemory(&cif, sizeof(STARTUPINFOA));
 	PROCESS_INFORMATION pi;
 
-	printf("\nStarting extraction...\n");
-	LogClass::LogMessage("(INFO) [FileOpen] Starting extraction:", 0, FileName, 0);
+	CnsClass::Print(NULL, "\nStarting extraction of %s...", FileName);
+	LogClass::LOG("(INFO) [FileOpen] Starting extraction of %s...", FileName);
 	if (!CreateProcessA((LPCSTR)FileName, NULL, NULL, NULL, FALSE, NULL, NULL, NULL, &cif, &pi))
 	{
-		CnsClass::SetTextColor(4);
-		printf("Cant open a file (C++ error code: %d)\n", GetLastError());
-		LogClass::LogMessage("(ERROR) [FileOpen] Cant open a file:", 1, FileName, 0);
-		CnsClass::SetTextColor(15);
+		CnsClass::Print("Red", "Cant open a file (%d)", GetLastError());
+		LogClass::LOG("(ERROR) [FileOpen] Cant open a %s:", FileName);
 		return 0;
 	}
 	WaitForSingleObject(pi.hProcess, INFINITE);
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
-	CnsClass::SetTextColor(2);
-	printf("Extraction is done.\n\n");
-	LogClass::LogMessage("(INFO) [FileOpen] Extraction is done:", 0, FileName, 0);
-	CnsClass::SetTextColor(15);
+	CnsClass::Print("Green", "Extraction is done.\n");
+	LogClass::LOG("(INFO) [FileOpen] Extraction of %s is done!", FileName);
 	return 1;
 }
 int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
@@ -409,26 +260,134 @@ int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 	SHFILEOPSTRUCTW fileOperation;
 	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));
 
-	fileOperation.wFunc = FO_MOVE;
+	fileOperation.wFunc  = FO_MOVE;
 	fileOperation.fFlags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_NOERRORUI | FOF_SIMPLEPROGRESS;
-	fileOperation.pFrom = Src;
-	fileOperation.pTo = Dest;
-	fileOperation.hwnd = hWnd;
+	fileOperation.pFrom  = Src;
+	fileOperation.pTo    = Dest;
+	fileOperation.hwnd   = hWnd;
 
 	int result = 1;
 	int ShellResult = SHFileOperationW(&fileOperation);
 	if (ShellResult != 0)
 	{
-		LogClass::LogMessage("[Windows Shell] Error code:", 1, 0, ShellResult);
-		CnsClass::SetTextColor(4);
-		printf("SHFileOperation Failure: %u\n", ShellResult);
-		CnsClass::SetTextColor(15);
+		CnsClass::Print("Red", "SHFileOperation error: %u", ShellResult);
+		LogClass::LOG("(ERROR) [Windows Shell] Error in SHFileOperation (%u)", ShellResult);
 		result = 0;
 	}
 
 	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));
 
 	return result;
+}
+
+void FileClass::FileQueueSet(wchar_t* DestDir)
+{
+	Beginning = TRUE;
+	CnsClass::ShowConsole();
+	ShowWindow(hWnd, SW_HIDE);
+	LogClass::LOG("(INFO) [Main] A process was started.");
+
+	std::string langstr;
+	if (InstallLang == 0)
+		langstr = "Russian";
+	else
+		langstr = "English";
+	LogClass::LOG("(INFO) [Main] Used %s version of mod.", langstr.c_str());
+
+	// Устанавливаем заданную директорию "по умолчанию"
+	wchar_t Destination[2048];
+	wcscpy(Destination, DestDir);
+	wcscat(Destination, L"DataTemp\\");
+	CreateDirectoryW(Destination, NULL);
+	SetCurrentDirectoryW(Destination);
+	LogClass::LOG(L"(INFO) [Main] Destination path: %s", (LPCWSTR)Destination);
+
+	char* FileName;
+	char files_exe[][40] = {
+		"1_temp.exe",
+		"2_temp.exe",
+		"3_temp.exe",
+	};
+
+	for (int i = 0; i < 4; i++)
+	{
+		if (i != 3)
+			FileName = files_exe[i];
+		else
+		{
+			if (InstallLang == 0)
+				FileName = (char*)"4_temp_rus.exe";
+			else
+				FileName = (char*)"4_temp_eng.exe";
+		}
+
+		CnsClass::Print("Yellow", L"[%d/4] Destination: %s\n", i+1, Destination);
+
+		if (!FileDownload(FileName))
+		{
+			QueueError = TRUE;
+			Sleep(2000);
+			break;
+		}
+
+		Sleep(2000);
+		if (!FileOpen(FileName))
+		{
+			CnsClass::Print("Red", "Error! File %s is not found in the destination directory! Installation is failed!", FileName);
+			LogClass::LOG("(ERROR) [Main] %s is not found in the destination directory!", FileName);
+			QueueError = TRUE;
+			Sleep(2000);
+			break;
+		}
+
+		Sleep(1000);
+		DeleteFileA(FileName);
+	}
+
+	SetCurrentDirectoryW(DestDir);
+	if (!QueueError)
+	{
+		LogClass::LOG("(INFO) [Windows Shell] Moving files into DATA folder...");
+		CnsClass::Print("Yellow", "Moving files into DATA folder...\nPlease, don't terminate the process to avoid mistakes!");
+		if (!ShellMoveFiles(L"DataTemp\\Data\\*\0", L"Data\0"))
+		{
+			QueueError = TRUE;
+			Sleep(2000);
+		}
+		else
+		{
+			CnsClass::Print("Green", "Moving files into DATA folder: Ok!");
+		}
+	}
+
+	RemoveDirectoryW(L"DataTemp\\Data");
+	RemoveDirectoryW(L"DataTemp");
+
+	Sleep(2000);
+	ShowWindow(hWnd, SW_SHOW);
+	CnsClass::HideConsole();
+	if (!QueueError)
+	{
+		wchar_t text[25];
+		if (CurrentLang == 0)
+			wcscpy(text, L"Установка завершена.");
+		else
+			wcscpy(text, L"Installation is done.");
+		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONQUESTION);
+		LogClass::LOG("(INFO) [Main] Process was done successfully.\n");
+	}
+	else
+	{
+		QueueError = FALSE;
+		wchar_t text[80];
+		if (CurrentLang == 0)
+			wcscpy(text, L"Установка завершена с ошибками. Проверьте filelog.txt для поиска проблемы.");
+		else
+			wcscpy(text, L"Installation is failed. See filelog.txt for searching problems.");
+		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONERROR);
+		LogClass::LOG("(INFO) [Main] Process was done with errors.\n");
+	}
+	Beginning = FALSE;
 }
 
 void FileClass::FilesDelete()

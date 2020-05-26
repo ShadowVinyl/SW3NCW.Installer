@@ -2,12 +2,19 @@
 #include <Shlwapi.h>
 #include <string>
 #include <shlobj.h>
-#include <stdio.h>
+#include <cstdio>
+#include <iso646.h>
 
 #include "pugixml_read.h"
 #include "main.h"
 
 #define CURL_STATICLIB
+#define NO_WIN32_LEAN_AND_MEAN
+
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable:4996)
+#endif
 
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4302)
@@ -22,21 +29,8 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-#define WINDOW_CLASS L"Main window class"	
-
 #define WINDOW_ICON MAKEINTRESOURCE(IDI_ICON1)
 #define WINDOW_BGND MAKEINTRESOURCE(IDB_BITMAP1)
-
-// Разрешение создаваемого окна (картинку тоже регулирует)
-#define WINDOW_SIZE_X 640
-#define WINDOW_SIZE_Y 480
-
-#define NO_WIN32_LEAN_AND_MEAN
-
-#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
-#define _CRT_SECURE_NO_WARNINGS
-#pragma warning(disable:4996)
-#endif
 
 // ID
 #define ID_START	1
@@ -52,20 +46,24 @@ HDC hdc;
 
 LPCWSTR FontName[]		= { L"Verdana" };
 
-#if defined(_WIN64)
-const wchar_t* WndName  = L"Star Wolves 3: New Civil War Installer (x64)";
+#if defined(_WIN64) or defined(WIN64)
+const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer";
 #else
 const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer (x86)";
 #endif
+const int WINDOW_SIZE_X = 640;
+const int WINDOW_SIZE_Y = 480;
 const char* FTP_URL		= "ftp://158.46.49.38/";
+const wchar_t* WinClass = L"Main window class";
 const wchar_t* progver	= L"1.5";
 const wchar_t* Lang1	= L"Русский (Russian)";
 const wchar_t* Lang2	= L"Английский (English)";
 const wchar_t* LogFile	= L"filelog.txt";
+wchar_t SavedPath[2048] = L"C:\\Program Files (x86)";
 int InstallLang			= 0; // 0 - Russian, 1 - English
+int CurrentLang			= 0;
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
-int CurrentLang;
 
 void Window::WindowMenu(HWND hWnd)
 {
@@ -163,7 +161,7 @@ void Window::ChangeLanguage()
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"About");
 		str = L"Choose the localization:\0";
 		TextOutW(hdc, 10, 20, str, wcslen(str));
-		LogClass::LogMessage("(INFO) [Main] Change UI language: English", 0, 0, 0);
+		LogClass::LOG("(INFO) [Main] UI language was changed to English");
 		WriteXMLConfigTag("InterfaceLang", "English");
 	}
 	else
@@ -174,7 +172,7 @@ void Window::ChangeLanguage()
 		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"О программе");
 		str = L"Выберите локализацию:\0";
 		TextOutW(hdc, 10, 20, str, wcslen(str));
-		LogClass::LogMessage("(INFO) [Main] Change UI language: Russian", 0, 0, 0);
+		LogClass::LOG("(INFO) [Main] UI language was changed to Russian");
 		WriteXMLConfigTag("InterfaceLang", "Russian");
 	}
 }
@@ -186,33 +184,32 @@ void Window::EnableButtons(bool Flag)
 bool Window::BrowseForFolder()
 {
 	wchar_t DestDir[2048];
-	LPITEMIDLIST pidl;
 	BOOL fRet;
-	BROWSEINFO bi = { 0 };
-	ZeroMemory(&bi, sizeof(bi));
 
 	wchar_t text[52];
 	if (CurrentLang == 0)
 		wcscpy(text, L"Выберите папку с игрой Star Wolves 3: Civil War");
 	else
 		wcscpy(text, L"Choose a game folder with Star Wolves 3: Civil War");
-	
+
+	BROWSEINFOW bi = { 0 };
+	ZeroMemory(&bi, sizeof(bi));
 	bi.hwndOwner	  = hWnd;
 	bi.pidlRoot		  = NULL;
 	bi.pszDisplayName = (LPWSTR)DestDir;
 	bi.lpszTitle	  = text;
-	bi.ulFlags		  = BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS;
+	bi.ulFlags		  = BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn			  = &BrowsePathProc;
 	bi.iImage		  = 0;
-	bi.lParam		  = (LPARAM)L"C:\\Program Files (x86)";
+	bi.lParam		  = (LPARAM)SavedPath;
 
-	pidl = ::SHBrowseForFolder(&bi);
+	LPITEMIDLIST pidl = ::SHBrowseForFolderW(&bi);
 
 	if (!pidl)
 		fRet = NULL;
 	else
 	{
-		fRet = SHGetPathFromIDList(pidl, (LPWSTR)DestDir);
+		fRet = SHGetPathFromIDListW(pidl, (LPWSTR)DestDir);
 		wcscat(DestDir, L"\\\0");
 		FileClass::FileQueueSet(DestDir);
 	}
@@ -233,7 +230,7 @@ ATOM RegisterMainClass(HINSTANCE hInstance)
 	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground	= CreatePatternBrush((HBITMAP)LoadImage(hInstance, WINDOW_BGND, IMAGE_BITMAP, WINDOW_SIZE_X, WINDOW_SIZE_Y, LR_COPYFROMRESOURCE));
 	wc.lpszMenuName		= NULL;
-	wc.lpszClassName	= WINDOW_CLASS;
+	wc.lpszClassName	= WinClass;
 	wc.hIconSm			= LoadIcon(hInstance, WINDOW_ICON);
 
 	return RegisterClassEx(&wc);
@@ -249,7 +246,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	hWnd = CreateWindowEx(
 		WS_EX_CONTROLPARENT,
-		WINDOW_CLASS,
+		WinClass,
 		WndName,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
 		(GetSystemMetrics(SM_CXSCREEN) - WINDOW_SIZE_X) / 2, (GetSystemMetrics(SM_CYSCREEN) - WINDOW_SIZE_Y) / 2,
@@ -262,8 +259,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	if (!hWnd) {
 		CnsClass::ShowConsole();
-		printf("InitInstance: Window creation is failed (C++ error code: %d)\n", GetLastError());
-		LogClass::LogMessage("(ERROR) [Main] Window creation is failed:", 1, 0, 0);
+		printf("Failure in window creation (%d)\n", GetLastError());
+		LogClass::LOG("(ERROR) [Main] Failure in window creation (%d)", GetLastError());
 		MessageBox(NULL, L"Window creation is failed.", WndName, MB_OK | MB_ICONERROR);
 		return FALSE;
 	};
@@ -316,23 +313,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		{
 			if (LOWORD(wParam) == ID_ABOUT)
 			{
-				wchar_t text[200];
-				if (CurrentLang == 0)
-				{
-					wcscpy(text, L"Версия установщика: ");
-					wcscat(text, progver);
-					wcscat(text, L"\nИспользуются библиотеки:\ncURL, PugiXML, zlib, Shlwapi.\n\n");
-					wcscat(text, L"Автор: Алексей 'Aleksey_SR' Петрачков");
-				}
-				else
-				{
-					wcscpy(text, L"Version: ");
-					wcscat(text, progver);
-					wcscat(text, L"\nUsing libraries:\ncURL, PugiXML, zlib, Shlwapi.\n\n");
-					wcscat(text, L"Author: Alex 'Aleksey_SR' Petrachkov");
-				}
-
-				MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONQUESTION);
+				DialogBox(hInstance, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+				break;
 			}
 			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
@@ -402,45 +384,61 @@ int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 	}
 	return 0;
 }
+INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		return (INT_PTR)TRUE;
+
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+		{
+			EndDialog(hDlg, LOWORD(wParam));
+			return (INT_PTR)TRUE;
+		}
+		break;
+	}
+	return (INT_PTR)FALSE;
+}
 BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 {
 	switch (dwCtrlType)
 	{
 		//this just disables Ctrl-C
-		case CTRL_C_EVENT:
-			return TRUE;
+	case CTRL_C_EVENT:
+		return TRUE;
 		// if user pressed "X" button on console window
-		case CTRL_CLOSE_EVENT:
+	case CTRL_CLOSE_EVENT:
+	{
+		if (Beginning != FALSE)
 		{
-			if (Beginning)
-			{
-				FileClass::FilesDelete();
-				LogClass::LogMessage("(WARNING) [Main] A process was terminated by user prematurely!", 0, 0, 0);
-				Beginning = FALSE;
-			}
-			LogClass::ReleaseLog();
-			FreeConsole();
-			return TRUE;
+			FileClass::FilesDelete();
+			LogClass::LOG("(WARNING) [Main] A process was terminated by user prematurely!");
+			Beginning = FALSE;
 		}
-		default:
-			return FALSE;
+		LogClass::ReleaseLog();
+		FreeConsole();
+		return TRUE;
+	}
+	default:
+		return FALSE;
 	}
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	LogClass::InitLog();
-	LogClass::LogMessage("(INFO) [Main] InitWindow...", 0, 0, 0);
+	LogClass::LOG("(INFO) [Main] InitWindow...");
 
 	AllocConsole();
 	FILE* CnsOpen = freopen("CONOUT$", "w", stdout);
 	SetConsoleCtrlHandler(CnsHandler, TRUE);
 	CnsClass::HideConsole();
 
-	string xmltag = ReadXMLConfigTag("InterfaceLang");
-	if (xmltag == "Russian" || xmltag != "English")
-		CurrentLang = 0;
-	else
+	std::string xmltag = ReadXMLConfigTag("InterfaceLang");
+	if (xmltag == "English")
 		CurrentLang = 1;
 
 	UNREFERENCED_PARAMETER(hPrevInstance);
@@ -448,21 +446,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (!RegisterMainClass(hInstance)) {
 		CnsClass::ShowConsole();
-		printf("RegisterMainClass: Critical error (C++ error code: %d)\n", GetLastError());
-		LogClass::LogMessage("(ERROR) [Main] Critical error in application (cannot register class) :", 1, 0, 0);
+		CnsClass::Print("Red", "Failure in class registration (%d)", GetLastError());
+		LogClass::LOG("(ERROR) [Main] Failure in class registration (%d)", GetLastError());
 		return FALSE;
 	};
 
 	if (!InitInstance(hInstance, nCmdShow))
 	{
 		CnsClass::ShowConsole();
-		printf("InitInstance: Cannot init application (C++ error code: %d)\n", GetLastError());
-		LogClass::LogMessage("(ERROR) [Main] Init application is failed:", 1, 0, 0);
+		CnsClass::Print("Red", "Failure in init application(%d)", GetLastError());
+		LogClass::LOG("(ERROR) [Main] Failure in init application (%d)", GetLastError());
 		MessageBox(NULL, L"Init application is failed.", WndName, MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 
-	LogClass::LogMessage("(INFO) [Main] InitWindow: Ok!", 0, 0, 0);
+	LogClass::LOG("(INFO) [Main] InitWindow: Ok!");
 
 	// Message loop
 	MSG msg = { 0 };
