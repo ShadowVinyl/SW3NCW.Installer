@@ -7,8 +7,6 @@
 #pragma warning(disable:4996)
 #endif
 
-using namespace std;
-
 pugi::xml_document xdoc;
 pugi::xml_parse_result xresult;
 pugi::xml_node xtag;
@@ -17,14 +15,14 @@ const wchar_t* cfgFile = L"filecfg.xml";
 
 wchar_t* GetXMLConfigFileName()
 {
-	wchar_t selfdir[MAX_PATH] = { 0 };
+	wchar_t selfdir[MAX_PATH];
 	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
 	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\\0");
+	wcscat(selfdir, L"\\");
 	wcscat(selfdir, cfgFile);
 	return selfdir;
 }
-string ReadXMLConfigTag(const char* TagName)
+std::string ReadXMLConfigTag(const char* TagName)
 {
 	wchar_t* filename = GetXMLConfigFileName();
 	xresult = xdoc.load_file(filename);

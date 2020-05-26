@@ -5,6 +5,8 @@
 #define IDI_ICON1                       101
 #define IDD_FORMVIEW                    101
 #define IDB_BITMAP1                     102
+#define IDD_ABOUTBOX					103
+#define IDR_MAINFRAME					104
 
 // Next default values for new objects
 // 
