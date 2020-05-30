@@ -36,13 +36,9 @@ void LogClass::InitLog()
 
 	time_t t = time(0);
 
-	wchar_t selfdir[MAX_PATH] = { 0 };
-	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
-	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\\0");
-	wcscat(selfdir, LogFile);
+	std::wstring filename = GetExePath() + LogFile;
 
-	FILE* out = _wfopen(selfdir, L"w");
+	FILE* out = _wfopen(filename.c_str(), L"w");
 	fprintf(out, "Log started: %s\n", ctime(&t));
 	fprintf(out, "Version: %s\n", version);
 	fprintf(out, "Interface: %s\n\n", TextUI);
@@ -58,13 +54,9 @@ void LogClass::LOG(const char* format, ...)
 	time_t t = time(0);
 	strftime(stime, MAXLEN, "(%H:%M:%S)", localtime(&t));
 
-	wchar_t selfdir[MAX_PATH] = { 0 };
-	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
-	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\\0");
-	wcscat(selfdir, LogFile);
+	std::wstring filename = GetExePath() + LogFile;
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = _wfopen(filename.c_str(), L"a");
 	if (out)
 	{
 		va_list args;
@@ -86,13 +78,9 @@ void LogClass::LOG(const wchar_t* format, ...)
 	time_t t = time(0);
 	wcsftime(stime, MAXLEN, L"(%H:%M:%S)", localtime(&t));
 
-	wchar_t selfdir[MAX_PATH] = { 0 };
-	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
-	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\\0");
-	wcscat(selfdir, LogFile);
+	std::wstring filename = GetExePath() + LogFile;
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = _wfopen(filename.c_str(), L"a");
 	if (out)
 	{
 		va_list args;
@@ -118,13 +106,9 @@ void LogClass::ReleaseLog()
 
 	time_t t = time(0);
 
-	wchar_t selfdir[MAX_PATH] = { 0 };
-	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
-	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\\0");
-	wcscat(selfdir, LogFile);
+	std::wstring filename = GetExePath() + LogFile;
 
-	FILE* out = _wfopen(selfdir, L"a");
+	FILE* out = _wfopen(filename.c_str(), L"a");
 	fprintf(out, "\nLog stopped: %s\n", ctime(&t));
 	fclose(out);
 }

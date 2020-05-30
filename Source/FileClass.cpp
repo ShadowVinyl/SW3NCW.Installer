@@ -4,11 +4,14 @@
 #endif
 
 #include <Windows.h>
+#include <Shlwapi.h>
 #include <cstdio>
 #include <fstream>
+#include <comdef.h>
 #include <curl/curl.h>
 
 #include "pugixml_read.h"
+#include "json_read.h"
 #include "FileClass.h"
 #include "CnsClass.h"
 #include "LogClass.h"
@@ -67,6 +70,15 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 	return 0;
 }
 
+std::wstring GetExePath()
+{
+	wchar_t selfdir[MAX_PATH];
+	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
+	PathRemoveFileSpecW(selfdir);
+	wcscat(selfdir, L"\\");
+	return selfdir;
+}
+
 int  FileClass::FtpGetStatus()
 {
 	CURLcode result;
@@ -79,14 +91,9 @@ int  FileClass::FtpGetStatus()
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
 		result = curl_easy_perform(curl);
 
-		if (result == CURLE_OK)
+		if (result != CURLE_OK)
 		{
-			CnsClass::Print("Green", "Server is online!\n");
-			LogClass::LOG("(INFO) [FileDownload] Server is online.");
-		}
-		else
-		{
-			CnsClass::Print("Green", "Server is offline (%d)", result);
+			CnsClass::Print("Red", "Server is offline (%d)", result);
 			LogClass::LOG("(ERROR) [FileDownload] Server is offline (%d)", result);
 		}
 		curl_easy_cleanup(curl);
@@ -96,12 +103,12 @@ int  FileClass::FtpGetStatus()
 }
 long FileClass::FileSize(const char* FileName)
 {
-	FILE* file = fopen(FileName, "rb");
+	FILE* file = fopen(FileName, "r");
 	if (!file)
 	{
 		CnsClass::Print("Red", "FileSize: cant open a file (%d)", GetLastError());
 		LogClass::LOG("(ERROR) [FileSize] Cant open a file %s (%d)", FileName, GetLastError());
-		return 0;
+		return NULL;
 	}
 	fseek(file, 0L, SEEK_END);
 	long size = ftell(file);
@@ -116,17 +123,18 @@ bool FileClass::FileExists(const char* FileName)
 	{
 		CnsClass::Print("Red", "FileExists: cant find %s on this adress (%d)", GetLastError());
 		LogClass::LOG("(ERROR) [FileExists] cant find %s on this adress (%d)", FileName, GetLastError());
-		return 0;
+		return NULL;
 	}
-	fclose(file);
-
-	return 1;
+	else
+	{
+		fclose(file);
+		return true;
+	}
 }
 double FileClass::FtpGetFileSize(const char* FileName)
 {
 	CURLcode result;
 	double filesize = 0.0;
-	double speed = 0.0;
 
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -188,9 +196,7 @@ bool FileClass::FileDownload(const char* FileName)
 			curl_easy_setopt(curl, CURLOPT_URL, Host);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, ofile);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlWriteData);
-			//curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
-			// Install the callback function
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
 
 			CnsClass::Print(NULL, "\nDownload: %s", FileName);
@@ -218,7 +224,7 @@ bool FileClass::FileDownload(const char* FileName)
 				if (result == CURLE_OK)
 					LogClass::LOG("(INFO) [FileDownload] Download speed (Kbyte/s): %.1f", total / 1024);
 
-				LogClass::LOG("(INFO) [FileDownload] Download: Ok!", 0, 0, 0);
+				LogClass::LOG("(INFO) [FileDownload] Download: Ok!");
 			}
 			fclose(ofile);
 		}
@@ -303,7 +309,7 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 	LogClass::LOG(L"(INFO) [Main] Destination path: %s", (LPCWSTR)Destination);
 
 	char* FileName;
-	char files_exe[][40] = {
+	char files[4][40] = {
 		"1_temp.exe",
 		"2_temp.exe",
 		"3_temp.exe",
@@ -312,7 +318,9 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 	for (int i = 0; i < 4; i++)
 	{
 		if (i != 3)
-			FileName = files_exe[i];
+		{
+			FileName = files[i];
+		}
 		else
 		{
 			if (InstallLang == 0)
@@ -368,23 +376,19 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 	CnsClass::HideConsole();
 	if (!QueueError)
 	{
-		wchar_t text[25];
-		if (CurrentLang == 0)
-			wcscpy(text, L"Установка завершена.");
-		else
-			wcscpy(text, L"Installation is done.");
-		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONQUESTION);
+		LPCSTR titletext = ReadJSONLocTag("cInstallDone").c_str();
+		_bstr_t b(WndName);
+		const char* newTitle = b;
+		MessageBoxA(hWnd, titletext, newTitle, MB_OK | MB_ICONQUESTION);
 		LogClass::LOG("(INFO) [Main] Process was done successfully.\n");
 	}
 	else
 	{
 		QueueError = FALSE;
-		wchar_t text[80];
-		if (CurrentLang == 0)
-			wcscpy(text, L"Установка завершена с ошибками. Проверьте filelog.txt для поиска проблемы.");
-		else
-			wcscpy(text, L"Installation is failed. See filelog.txt for searching problems.");
-		MessageBoxW(hWnd, text, WndName, MB_OK | MB_ICONERROR);
+		LPCSTR titletext = ReadJSONLocTag("cInstallFailed").c_str();
+		_bstr_t b(WndName);
+		const char* newTitle = b;
+		MessageBoxA(hWnd, titletext, newTitle, MB_OK | MB_ICONERROR);
 		LogClass::LOG("(INFO) [Main] Process was done with errors.\n");
 	}
 	Beginning = FALSE;
@@ -392,13 +396,9 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 
 void FileClass::FilesDelete()
 {
-	if (FileExists("1_temp.exe") == 1)
-		DeleteFileA("1_temp.exe");
-	if (FileExists("2_temp.exe") == 1)
-		DeleteFileA("2_temp.exe");
-	if (FileExists("3_temp.exe") == 1)
-		DeleteFileA("3_temp.exe");
-	if (FileExists("4_temp.exe") == 1)
-		DeleteFileA("4_temp.exe");
+	DeleteFileA("1_temp.exe");
+	DeleteFileA("2_temp.exe");
+	DeleteFileA("3_temp.exe");
+	DeleteFileA("4_temp.exe");
 	return;
 }

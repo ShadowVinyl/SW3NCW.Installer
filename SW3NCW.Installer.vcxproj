@@ -1,0 +1,289 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{1E61F7D6-B306-4AF2-8FFE-32C67DA178AF}</ProjectGuid>
+    <RootNamespace>SW3NCWInstaller</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <EnableUnitySupport>false</EnableUnitySupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <EnableUnitySupport>false</EnableUnitySupport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib;$(SolutionDir)Source\Debug\lib</LibraryPath>
+    <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
+    <OutDir>$(SolutionDir)build\x86-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
+    <TargetName>$(ProjectName)-d.x86</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <SourcePath>$(VC_SourcePath);$(SolutionDir)Source</SourcePath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib\x64</LibraryWPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)Source\lib\x64</LibraryPath>
+    <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</IntDir>
+    <TargetName>$(ProjectName)-d.x64</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib</LibraryPath>
+    <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib</LibraryWPath>
+    <CopyLocalProjectReference>false</CopyLocalProjectReference>
+    <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
+    <TargetName>$(ProjectName).x86</TargetName>
+    <OutDir>$(SolutionDir)build\x86-$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</IntDir>
+    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib\x64</LibraryPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib\x64</LibraryWPath>
+    <SourcePath>$(SourcePath);$(SolutionDir)Source;$(SolutionDir)Source\include</SourcePath>
+    <TargetName>$(ProjectName).x64</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <AssemblerListingLocation>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</AssemblerListingLocation>
+      <ObjectFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</ObjectFileName>
+      <XMLDocumentationFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</XMLDocumentationFileName>
+      <BrowseInformationFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</BrowseInformationFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Debug\lib</AdditionalLibraryDirectories>
+      <ShowProgress>NotSet</ShowProgress>
+      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
+      <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
+    </Link>
+    <ResourceCompile>
+      <ResourceOutputFileName>Source\res-x86.rec</ResourceOutputFileName>
+    </ResourceCompile>
+    <ProjectReference />
+    <BuildLog>
+      <Path>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <ProgramDataBaseFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <AssemblerListingLocation>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</AssemblerListingLocation>
+      <ObjectFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</ObjectFileName>
+      <XMLDocumentationFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</XMLDocumentationFileName>
+      <BrowseInformationFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</BrowseInformationFile>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\Debug\lib\x64</AdditionalLibraryDirectories>
+      <ManifestFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
+    </Link>
+    <ResourceCompile>
+      <ResourceOutputFileName>Source\res-x64.rec</ResourceOutputFileName>
+    </ResourceCompile>
+    <BuildLog>
+      <Path>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <AssemblerListingLocation>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</AssemblerListingLocation>
+      <ObjectFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</ObjectFileName>
+      <XMLDocumentationFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</XMLDocumentationFileName>
+      <BrowseInformationFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</BrowseInformationFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\lib</AdditionalLibraryDirectories>
+      <ShowProgress>NotSet</ShowProgress>
+      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
+      <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
+    </Link>
+    <ResourceCompile>
+      <ResourceOutputFileName>Source\res-x86.rec</ResourceOutputFileName>
+    </ResourceCompile>
+    <ProjectReference />
+    <BuildLog>
+      <Path>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OmitFramePointers>false</OmitFramePointers>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <ProgramDataBaseFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <AssemblerListingLocation>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</AssemblerListingLocation>
+      <ObjectFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</ObjectFileName>
+      <XMLDocumentationFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</XMLDocumentationFileName>
+      <BrowseInformationFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</BrowseInformationFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Source\lib\x64</AdditionalLibraryDirectories>
+      <ManifestFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <ResourceCompile>
+      <ResourceOutputFileName>Source\res-x64.rec</ResourceOutputFileName>
+    </ResourceCompile>
+    <BuildLog>
+      <Path>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
+    </BuildLog>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Source\CnsClass.h" />
+    <ClInclude Include="Source\FileClass.h" />
+    <ClInclude Include="Source\include\json\allocator.h" />
+    <ClInclude Include="Source\include\json\assertions.h" />
+    <ClInclude Include="Source\include\json\config.h" />
+    <ClInclude Include="Source\include\json\forwards.h" />
+    <ClInclude Include="Source\include\json\json-src\json_tool.h" />
+    <ClInclude Include="Source\include\json\json.h" />
+    <ClInclude Include="Source\include\json\json_features.h" />
+    <ClInclude Include="Source\include\json\reader.h" />
+    <ClInclude Include="Source\include\json\value.h" />
+    <ClInclude Include="Source\include\json\version.h" />
+    <ClInclude Include="Source\include\json\writer.h" />
+    <ClInclude Include="Source\include\pugixml\pugiconfig.hpp" />
+    <ClInclude Include="Source\include\pugixml\pugixml.hpp" />
+    <ClInclude Include="Source\json_read.h" />
+    <ClInclude Include="Source\LogClass.h" />
+    <ClInclude Include="Source\main.h" />
+    <ClInclude Include="Source\pugixml_read.h" />
+    <ClInclude Include="Source\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\CnsClass.cpp" />
+    <ClCompile Include="Source\FileClass.cpp" />
+    <ClCompile Include="Source\include\json\json-src\json_reader.cpp" />
+    <ClCompile Include="Source\include\json\json-src\json_value.cpp" />
+    <ClCompile Include="Source\include\json\json-src\json_writer.cpp" />
+    <ClCompile Include="Source\include\pugixml\pugixml.cpp" />
+    <ClCompile Include="Source\json_read.cpp" />
+    <ClCompile Include="Source\LogClass.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\pugixml_read.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Source\Window_Background.bmp" />
+    <Image Include="Source\Window_Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Source\Res.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Source\Russo One.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\include\json\json-src\json_valueiterator.inl" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

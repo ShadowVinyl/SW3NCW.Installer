@@ -4,9 +4,11 @@
 #include <shlobj.h>
 #include <cstdio>
 #include <iso646.h>
+#include <comdef.h>
 
 #include "pugixml_read.h"
 #include "main.h"
+#include "json_read.h"
 
 #define CURL_STATICLIB
 #define NO_WIN32_LEAN_AND_MEAN
@@ -44,7 +46,7 @@ HWND hWnd, hWndConsole, hButtonStart, hButtonInfo, hButtonAbout, hComboBox;
 HFONT hFont;
 HDC hdc;
 
-LPCWSTR FontName[]		= { L"Verdana" };
+LPCSTR FontName[]		= { "Verdana" };
 
 #if defined(_WIN64) or defined(WIN64)
 const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer";
@@ -54,42 +56,25 @@ const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer (x86)";
 const int WINDOW_SIZE_X = 640;
 const int WINDOW_SIZE_Y = 480;
 const char* FTP_URL		= "ftp://158.46.49.38/";
-const wchar_t* WinClass = L"Main window class";
-const wchar_t* progver	= L"1.5";
-const wchar_t* Lang1	= L"Русский (Russian)";
-const wchar_t* Lang2	= L"Английский (English)";
+const wchar_t* WinClass	= L"Main window class";
 const wchar_t* LogFile	= L"filelog.txt";
+const wchar_t* cfgFile	= L"filecfg.xml";
+const wchar_t* progver	= L"1.5";
 wchar_t SavedPath[2048] = L"C:\\Program Files (x86)";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 int CurrentLang			= 0;
 bool QueueError			= FALSE;
 bool Beginning			= FALSE;
+LPCSTR Lang1;
+LPCSTR Lang2;
+
 
 void Window::WindowMenu(HWND hWnd)
 {
-	struct texts {
-		LPCWSTR text1;
-		LPCWSTR text2;
-		LPCWSTR text3;
-	};
-	texts text;
-	if (CurrentLang == 0)
-	{
-		text.text1 = L"Начать установку";
-		text.text2 = L"Руководство по моду";
-		text.text3 = L"О программе";
-	}
-	else
-	{
-		text.text1 = L"Start installation";
-		text.text2 = L"Guide";
-		text.text3 = L"About";
-	}
-
-	hButtonStart = CreateWindowEx(
+	hButtonStart = CreateWindowExA(
 		0,
-		L"BUTTON",
-		text.text1,
+		"BUTTON",
+		ReadJSONLocTag("bInstallStart").c_str(),
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 160,
 		165, 30,
@@ -100,10 +85,10 @@ void Window::WindowMenu(HWND hWnd)
 	);
 
 	
-	hButtonInfo = CreateWindowEx(
+	hButtonInfo = CreateWindowExA(
 		0,
-		L"BUTTON",
-		text.text2,
+		"BUTTON",
+		ReadJSONLocTag("bModGuide").c_str(),
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 120,
 		165, 30,
@@ -113,10 +98,10 @@ void Window::WindowMenu(HWND hWnd)
 		NULL
 	);
 
-	hButtonAbout = CreateWindowEx(
+	hButtonAbout = CreateWindowExA(
 		0,
-		L"BUTTON",
-		text.text3,
+		"BUTTON",
+		ReadJSONLocTag("bAbout").c_str(),
 		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
 		10, WINDOW_SIZE_Y - 80,
 		165, 30,
@@ -138,40 +123,38 @@ void Window::WindowMenu(HWND hWnd)
 		0
 	);
 
-	SendMessage(hButtonStart, WM_SETFONT, (WCHAR)hFont, NULL);
-	SendMessage(hButtonInfo, WM_SETFONT, (WCHAR)hFont, NULL);
-	SendMessage(hButtonAbout, WM_SETFONT, (WCHAR)hFont, NULL); 
-	SendMessage(hComboBox, WM_SETFONT, (WCHAR)hFont, NULL);
+	SendMessageA(hButtonStart, WM_SETFONT, (WCHAR)hFont, NULL);
+	SendMessageA(hButtonInfo, WM_SETFONT, (WCHAR)hFont, NULL);
+	SendMessageA(hButtonAbout, WM_SETFONT, (WCHAR)hFont, NULL); 
+	SendMessageA(hComboBox, WM_SETFONT, (WCHAR)hFont, NULL);
 
-	SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)Lang1);
-	SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)Lang2);
+	SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)ReadJSONLocTag("cChLoc1").c_str());
+	SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)ReadJSONLocTag("cChLoc2").c_str());
 
 	ShowWindow(hWnd, SW_SHOW);
-	SendMessage(hComboBox, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
+	SendMessageA(hComboBox, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
 
 }
 void Window::ChangeLanguage()
 {
-	LPCWSTR str;
+	SendMessageA(hButtonStart, WM_SETTEXT, 0, (LPARAM)ReadJSONLocTag("bInstallStart").c_str());
+	SendMessageA(hButtonInfo,  WM_SETTEXT, 0, (LPARAM)ReadJSONLocTag("bModGuide").c_str());
+	SendMessageA(hButtonAbout, WM_SETTEXT, 0, (LPARAM)ReadJSONLocTag("bAbout").c_str());
+	SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)ReadJSONLocTag("cChLoc1").c_str());
+	SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)ReadJSONLocTag("cChLoc2").c_str());
+
+	LPCSTR str = ReadJSONLocTag("cChLoc").c_str();
+	TextOutA(hdc, 10, 20, str, strlen(str));
+
 	if (CurrentLang == 0)
 	{
 		CurrentLang = 1;
-		SendMessage(hButtonStart, WM_SETTEXT, 0, (LPARAM)L"Start installation");
-		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Guide");
-		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"About");
-		str = L"Choose the localization:\0";
-		TextOutW(hdc, 10, 20, str, wcslen(str));
 		LogClass::LOG("(INFO) [Main] UI language was changed to English");
 		WriteXMLConfigTag("InterfaceLang", "English");
 	}
 	else
 	{
 		CurrentLang = 0;
-		SendMessage(hButtonStart, WM_SETTEXT, 0, (LPARAM)L"Начать установку");
-		SendMessage(hButtonInfo, WM_SETTEXT, 0, (LPARAM)L"Руководство по моду");
-		SendMessage(hButtonAbout, WM_SETTEXT, 0, (LPARAM)L"О программе");
-		str = L"Выберите локализацию:\0";
-		TextOutW(hdc, 10, 20, str, wcslen(str));
 		LogClass::LOG("(INFO) [Main] UI language was changed to Russian");
 		WriteXMLConfigTag("InterfaceLang", "Russian");
 	}
@@ -186,24 +169,20 @@ bool Window::BrowseForFolder()
 	wchar_t DestDir[2048];
 	BOOL fRet;
 
-	wchar_t text[52];
-	if (CurrentLang == 0)
-		wcscpy(text, L"Выберите папку с игрой Star Wolves 3: Civil War");
-	else
-		wcscpy(text, L"Choose a game folder with Star Wolves 3: Civil War");
+	std::string titletxt = ReadJSONLocTag("cChInstallPath").c_str();
 
-	BROWSEINFOW bi = { 0 };
+	BROWSEINFOA bi = { 0 };
 	ZeroMemory(&bi, sizeof(bi));
 	bi.hwndOwner	  = hWnd;
 	bi.pidlRoot		  = NULL;
-	bi.pszDisplayName = (LPWSTR)DestDir;
-	bi.lpszTitle	  = text;
+	bi.pszDisplayName = (LPSTR)titletxt.c_str();
+	bi.lpszTitle	  = titletxt.c_str();
 	bi.ulFlags		  = BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn			  = &BrowsePathProc;
 	bi.iImage		  = 0;
 	bi.lParam		  = (LPARAM)SavedPath;
 
-	LPITEMIDLIST pidl = ::SHBrowseForFolderW(&bi);
+	LPITEMIDLIST pidl = ::SHBrowseForFolderA(&bi);
 
 	if (!pidl)
 		fRet = NULL;
@@ -227,7 +206,7 @@ ATOM RegisterMainClass(HINSTANCE hInstance)
 	wc.cbWndExtra		= 0;
 	wc.hInstance		= hInstance;
 	wc.hIcon			= LoadIcon(hInstance, WINDOW_ICON);
-	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
+	wc.hCursor			= LoadCursor(NULL, MAKEINTRESOURCEW(32512));
 	wc.hbrBackground	= CreatePatternBrush((HBITMAP)LoadImage(hInstance, WINDOW_BGND, IMAGE_BITMAP, WINDOW_SIZE_X, WINDOW_SIZE_Y, LR_COPYFROMRESOURCE));
 	wc.lpszMenuName		= NULL;
 	wc.lpszClassName	= WinClass;
@@ -237,15 +216,15 @@ ATOM RegisterMainClass(HINSTANCE hInstance)
 }
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-	hFont = CreateFont(-13, 0, 0, 0,
+	hFont = CreateFontA(-13, 0, 0, 0,
 		FW_NORMAL, 0,
 		0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_DONTCARE,
 		*FontName);
 
-	hWnd = CreateWindowEx(
-		WS_EX_CONTROLPARENT,
+	hWnd = CreateWindowExW(
+		0L,
 		WinClass,
 		WndName,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_VISIBLE,
@@ -259,9 +238,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	if (!hWnd) {
 		CnsClass::ShowConsole();
-		printf("Failure in window creation (%d)\n", GetLastError());
+		CnsClass::Print("Red","Failure in window creation (%d)\n", GetLastError());
 		LogClass::LOG("(ERROR) [Main] Failure in window creation (%d)", GetLastError());
-		MessageBox(NULL, L"Window creation is failed.", WndName, MB_OK | MB_ICONERROR);
+		MessageBoxA(NULL, "Window creation is failed.", (LPCSTR)WndName, MB_OK | MB_ICONERROR);
 		return FALSE;
 	};
 
@@ -275,11 +254,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 {
 	PAINTSTRUCT ps;
 	HFONT hFont2;
-	LPCWSTR str;
-	if (CurrentLang == 0)
-		str = L"Выберите локализацию:\0";
-	else
-		str = L"Choose the localization:\0";
+	LPCSTR titletext1, titletext2;
+
 	switch (message)
 	{
 		case WM_CREATE:
@@ -289,20 +265,22 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		{
 			hdc = BeginPaint(hWnd, &ps);
 
-			static LOGFONT lf;
+			static LOGFONTA lf;
 			lf.lfCharSet = DEFAULT_CHARSET;
 			lf.lfPitchAndFamily = DEFAULT_PITCH;
-			wcscpy(lf.lfFaceName, *FontName);
+			strcpy(lf.lfFaceName, *FontName);
 			lf.lfHeight = 15;
 			lf.lfWidth = 6;
 			lf.lfWeight = 5;
 			lf.lfEscapement = 0; //шрифт без поворота
 
-			hFont2 = CreateFontIndirect(&lf);
+			hFont2 = CreateFontIndirectA(&lf);
 			SelectObject(hdc, hFont2);
 			SetTextColor(hdc, RGB(255, 255, 255));
 			SetBkMode(hdc, TRANSPARENT);
-			TextOutW(hdc, 10, 20, str, wcslen(str));
+
+			titletext1 = ReadJSONLocTag("cChLoc").c_str();
+			TextOutA(hdc, 10, 20, titletext1, strlen(titletext1));
 
 			DeleteObject(hFont2); //выгрузим из памяти объект шрифта
 
@@ -318,14 +296,13 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
-				int ItemIndex = SendMessage((HWND)lParam, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
-				TCHAR  ListItem[256];
-				(TCHAR)SendMessage((HWND)lParam, (UINT)CB_GETLBTEXT, (WPARAM)ItemIndex, (LPARAM)ListItem);
-				wcscat((LPWSTR)ListItem, L"\0");
-				if (wcslen((LPWSTR)ListItem) == wcslen(Lang2))
-					InstallLang = 1;
-				else
+				char ListItem[256];
+				int ItemIndex = SendMessage(hComboBox, (UINT)CB_GETCURSEL, (WPARAM)0, (LPARAM)0);
+				SendMessage(hComboBox, (UINT)CB_GETLBTEXT, (WPARAM)ItemIndex, (LPARAM)ListItem);
+				if (ItemIndex == 1)
 					InstallLang = 0;
+				else
+					InstallLang = 1;
 			}
 			if (LOWORD(wParam) == ID_START)
 				Window::BrowseForFolder();
@@ -339,13 +316,12 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			break;
 		case WM_CLOSE:
 		{
-			wchar_t text[55];
-			if (CurrentLang == 0)
-				wcscpy(text, L"Вы уверены, что хотите выйти из программы установки?");
-			else
-				wcscpy(text, L"Are you sure to close the installer?");
+			titletext2 = ReadJSONLocTag("bOnExit").c_str();
 
-			const int result = MessageBox(hWnd, text, WndName, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			_bstr_t b(WndName);
+			const char* newTitle = b;
+
+			const int result = MessageBoxA(hWnd, titletext2, newTitle, MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
 			switch (result)
 			{
 				case IDYES:
@@ -441,6 +417,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (xmltag == "English")
 		CurrentLang = 1;
 
+	Lang1 = ReadJSONLocTag("cChLoc1").c_str();
+	Lang2 = ReadJSONLocTag("cChLoc2").c_str();
+
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
@@ -456,7 +435,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CnsClass::ShowConsole();
 		CnsClass::Print("Red", "Failure in init application(%d)", GetLastError());
 		LogClass::LOG("(ERROR) [Main] Failure in init application (%d)", GetLastError());
-		MessageBox(NULL, L"Init application is failed.", WndName, MB_OK | MB_ICONERROR);
+		MessageBoxA(NULL, "Init application is failed.", (LPCSTR)WndName, MB_OK | MB_ICONERROR);
 		return FALSE;
 	}
 
