@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
@@ -25,21 +17,6 @@
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
-    <EnableUnitySupport>false</EnableUnitySupport>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -58,12 +35,6 @@
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -71,14 +42,6 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(IncludePath);$(SolutionDir)include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)libraries\lib-x86-debug</LibraryPath>
-    <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
-    <OutDir>$(SolutionDir)build\x86-$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
-    <TargetName>$(ProjectName)-d.x86</TargetName>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <SourcePath>$(VC_SourcePath);$(SolutionDir)Source;</SourcePath>
     <LibraryWPath>$(WindowsSDK_MetadataPath);</LibraryWPath>
@@ -87,16 +50,6 @@
     <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</IntDir>
     <TargetName>$(ProjectName)-d.x64</TargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(IncludePath);$(SolutionDir)include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)libraries\lib-x86-release</LibraryPath>
-    <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
-    <LibraryWPath>$(WindowsSDK_MetadataPath);</LibraryWPath>
-    <CopyLocalProjectReference>false</CopyLocalProjectReference>
-    <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
-    <TargetName>$(ProjectName).x86</TargetName>
-    <OutDir>$(SolutionDir)build\x86-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
@@ -107,37 +60,6 @@
     <SourcePath>$(SourcePath);$(SolutionDir)Source;$(SolutionDir)include</SourcePath>
     <TargetName>$(ProjectName).x64</TargetName>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <ProgramDataBaseFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
-      <AssemblerListingLocation>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</AssemblerListingLocation>
-      <ObjectFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</ObjectFileName>
-      <XMLDocumentationFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</XMLDocumentationFileName>
-      <BrowseInformationFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</BrowseInformationFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x86-debug</AdditionalLibraryDirectories>
-      <ShowProgress>NotSet</ShowProgress>
-      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
-      <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
-    </Link>
-    <ResourceCompile>
-      <ResourceOutputFileName>Source\res-x86.rec</ResourceOutputFileName>
-    </ResourceCompile>
-    <ProjectReference />
-    <BuildLog>
-      <Path>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
-    </BuildLog>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -164,41 +86,6 @@
     </ResourceCompile>
     <BuildLog>
       <Path>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
-    </BuildLog>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <CompileAs>CompileAsCpp</CompileAs>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <ProgramDataBaseFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
-      <AssemblerListingLocation>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</AssemblerListingLocation>
-      <ObjectFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</ObjectFileName>
-      <XMLDocumentationFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</XMLDocumentationFileName>
-      <BrowseInformationFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</BrowseInformationFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x86-release</AdditionalLibraryDirectories>
-      <ShowProgress>NotSet</ShowProgress>
-      <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
-      <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
-    </Link>
-    <ResourceCompile>
-      <ResourceOutputFileName>Source\res-x86.rec</ResourceOutputFileName>
-    </ResourceCompile>
-    <ProjectReference />
-    <BuildLog>
-      <Path>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(MSBuildProjectName).log</Path>
     </BuildLog>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
