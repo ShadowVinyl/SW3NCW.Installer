@@ -51,46 +51,46 @@
     <ClInclude Include="Source\FileClass.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\pugixml\pugixml.hpp">
+    <ClInclude Include="include\pugixml\pugixml.hpp">
       <Filter>Файлы заголовков\pugixml</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\pugixml\pugiconfig.hpp">
+    <ClInclude Include="include\pugixml\pugiconfig.hpp">
       <Filter>Файлы заголовков\pugixml</Filter>
     </ClInclude>
     <ClInclude Include="Source\json_read.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\allocator.h">
+    <ClInclude Include="include\json\allocator.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\assertions.h">
+    <ClInclude Include="include\json\assertions.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\config.h">
+    <ClInclude Include="include\json\config.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\forwards.h">
+    <ClInclude Include="include\json\forwards.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\json.h">
+    <ClInclude Include="include\json\json.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\json_features.h">
+    <ClInclude Include="include\json\json_features.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\reader.h">
+    <ClInclude Include="include\json\reader.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\value.h">
+    <ClInclude Include="include\json\value.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\version.h">
+    <ClInclude Include="include\json\version.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\writer.h">
+    <ClInclude Include="include\json\writer.h">
       <Filter>Файлы заголовков\json</Filter>
     </ClInclude>
-    <ClInclude Include="Source\include\json\json-src\json_tool.h">
+    <ClInclude Include="include\json\json-src\json_tool.h">
       <Filter>Исходные файлы\json\json-src</Filter>
     </ClInclude>
   </ItemGroup>
@@ -110,19 +110,19 @@
     <ClCompile Include="Source\FileClass.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Source\include\pugixml\pugixml.cpp">
+    <ClCompile Include="include\pugixml\pugixml.cpp">
       <Filter>Исходные файлы\pugixml</Filter>
     </ClCompile>
     <ClCompile Include="Source\json_read.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="Source\include\json\json-src\json_reader.cpp">
+    <ClCompile Include="include\json\json-src\json_reader.cpp">
       <Filter>Исходные файлы\json\json-src</Filter>
     </ClCompile>
-    <ClCompile Include="Source\include\json\json-src\json_value.cpp">
+    <ClCompile Include="include\json\json-src\json_value.cpp">
       <Filter>Исходные файлы\json\json-src</Filter>
     </ClCompile>
-    <ClCompile Include="Source\include\json\json-src\json_writer.cpp">
+    <ClCompile Include="include\json\json-src\json_writer.cpp">
       <Filter>Исходные файлы\json\json-src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -145,7 +145,7 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Source\include\json\json-src\json_valueiterator.inl">
+    <None Include="include\json\json-src\json_valueiterator.inl">
       <Filter>Исходные файлы\json\json-src</Filter>
     </None>
   </ItemGroup>

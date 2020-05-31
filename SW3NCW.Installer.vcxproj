@@ -72,27 +72,27 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib;$(SolutionDir)Source\Debug\lib</LibraryPath>
+    <IncludePath>$(IncludePath);$(SolutionDir)include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)libraries\lib-x86-debug</LibraryPath>
     <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
     <OutDir>$(SolutionDir)build\x86-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
     <TargetName>$(ProjectName)-d.x86</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <SourcePath>$(VC_SourcePath);$(SolutionDir)Source</SourcePath>
-    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib\x64</LibraryWPath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Source\include</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)Source\lib\x64</LibraryPath>
+    <SourcePath>$(VC_SourcePath);$(SolutionDir)Source;</SourcePath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);</LibraryWPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)include</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)libraries\lib-x64-debug</LibraryPath>
     <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</IntDir>
     <TargetName>$(ProjectName)-d.x64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib</LibraryPath>
+    <IncludePath>$(IncludePath);$(SolutionDir)include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)libraries\lib-x86-release</LibraryPath>
     <SourcePath>$(SourcePath);$(SolutionDir)Source</SourcePath>
-    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib</LibraryWPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);</LibraryWPath>
     <CopyLocalProjectReference>false</CopyLocalProjectReference>
     <IntDir>$(SolutionDir)build\x86-$(Configuration)\buildinfo\</IntDir>
     <TargetName>$(ProjectName).x86</TargetName>
@@ -101,10 +101,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)build\x64-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</IntDir>
-    <IncludePath>$(IncludePath);$(SolutionDir)Source\include</IncludePath>
-    <LibraryPath>$(LibraryPath);$(SolutionDir)Source\lib\x64</LibraryPath>
-    <LibraryWPath>$(WindowsSDK_MetadataPath);$(SolutionDir)Source\lib\x64</LibraryWPath>
-    <SourcePath>$(SourcePath);$(SolutionDir)Source;$(SolutionDir)Source\include</SourcePath>
+    <IncludePath>$(IncludePath);$(SolutionDir)include</IncludePath>
+    <LibraryPath>$(LibraryPath);$(SolutionDir)libraries\lib-x64-release</LibraryPath>
+    <LibraryWPath>$(WindowsSDK_MetadataPath);</LibraryWPath>
+    <SourcePath>$(SourcePath);$(SolutionDir)Source;$(SolutionDir)include</SourcePath>
     <TargetName>$(ProjectName).x64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -112,8 +112,8 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ProgramDataBaseFileName>$(SolutionDir)build\x86-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
@@ -125,7 +125,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Source\Debug\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x86-debug</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
       <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
       <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
@@ -142,7 +142,6 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <ProgramDataBaseFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <AssemblerListingLocation>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</AssemblerListingLocation>
@@ -150,13 +149,15 @@
       <XMLDocumentationFileName>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</XMLDocumentationFileName>
       <BrowseInformationFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\</BrowseInformationFile>
       <CompileAs>CompileAsCpp</CompileAs>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_DEBUG;_WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Source\Debug\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x64-debug</AdditionalLibraryDirectories>
       <ManifestFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
+      <IgnoreSpecificDefaultLibraries>libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <ResourceCompile>
       <ResourceOutputFileName>Source\res-x64.rec</ResourceOutputFileName>
@@ -172,7 +173,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAs>CompileAsCpp</CompileAs>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -187,7 +188,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Source\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x86-release</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
       <ForceFileOutput>UndefinedSymbolOnly</ForceFileOutput>
       <ManifestFile>$(SolutionDir)build\x86-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
@@ -208,7 +209,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WIN64;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>false</OmitFramePointers>
       <CompileAs>CompileAsCpp</CompileAs>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -223,7 +224,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)Source\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)libraries\lib-x64-release</AdditionalLibraryDirectories>
       <ManifestFile>$(SolutionDir)build\x64-$(Configuration)\buildinfo\$(TargetName)$(TargetExt).intermediate.manifest</ManifestFile>
     </Link>
     <ProjectReference>
@@ -239,19 +240,19 @@
   <ItemGroup>
     <ClInclude Include="Source\CnsClass.h" />
     <ClInclude Include="Source\FileClass.h" />
-    <ClInclude Include="Source\include\json\allocator.h" />
-    <ClInclude Include="Source\include\json\assertions.h" />
-    <ClInclude Include="Source\include\json\config.h" />
-    <ClInclude Include="Source\include\json\forwards.h" />
-    <ClInclude Include="Source\include\json\json-src\json_tool.h" />
-    <ClInclude Include="Source\include\json\json.h" />
-    <ClInclude Include="Source\include\json\json_features.h" />
-    <ClInclude Include="Source\include\json\reader.h" />
-    <ClInclude Include="Source\include\json\value.h" />
-    <ClInclude Include="Source\include\json\version.h" />
-    <ClInclude Include="Source\include\json\writer.h" />
-    <ClInclude Include="Source\include\pugixml\pugiconfig.hpp" />
-    <ClInclude Include="Source\include\pugixml\pugixml.hpp" />
+    <ClInclude Include="include\json\allocator.h" />
+    <ClInclude Include="include\json\assertions.h" />
+    <ClInclude Include="include\json\config.h" />
+    <ClInclude Include="include\json\forwards.h" />
+    <ClInclude Include="include\json\json-src\json_tool.h" />
+    <ClInclude Include="include\json\json.h" />
+    <ClInclude Include="include\json\json_features.h" />
+    <ClInclude Include="include\json\reader.h" />
+    <ClInclude Include="include\json\value.h" />
+    <ClInclude Include="include\json\version.h" />
+    <ClInclude Include="include\json\writer.h" />
+    <ClInclude Include="include\pugixml\pugiconfig.hpp" />
+    <ClInclude Include="include\pugixml\pugixml.hpp" />
     <ClInclude Include="Source\json_read.h" />
     <ClInclude Include="Source\LogClass.h" />
     <ClInclude Include="Source\main.h" />
@@ -261,10 +262,10 @@
   <ItemGroup>
     <ClCompile Include="Source\CnsClass.cpp" />
     <ClCompile Include="Source\FileClass.cpp" />
-    <ClCompile Include="Source\include\json\json-src\json_reader.cpp" />
-    <ClCompile Include="Source\include\json\json-src\json_value.cpp" />
-    <ClCompile Include="Source\include\json\json-src\json_writer.cpp" />
-    <ClCompile Include="Source\include\pugixml\pugixml.cpp" />
+    <ClCompile Include="include\json\json-src\json_reader.cpp" />
+    <ClCompile Include="include\json\json-src\json_value.cpp" />
+    <ClCompile Include="include\json\json-src\json_writer.cpp" />
+    <ClCompile Include="include\pugixml\pugixml.cpp" />
     <ClCompile Include="Source\json_read.cpp" />
     <ClCompile Include="Source\LogClass.cpp" />
     <ClCompile Include="Source\main.cpp" />
@@ -281,7 +282,7 @@
     <Font Include="Source\Russo One.ttf" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Source\include\json\json-src\json_valueiterator.inl" />
+    <None Include="include\json\json-src\json_valueiterator.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

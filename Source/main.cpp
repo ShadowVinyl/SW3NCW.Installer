@@ -22,9 +22,16 @@
 #pragma warning(disable : 4302)
 
 #pragma comment(lib,"Shlwapi.lib")
+
+#if defined(_DEBUG)
+#pragma comment(lib,"zlib.lib")
+#pragma comment(lib,"pugixml.lib")
+#pragma comment(lib,"libcurld.lib")
+#else
 #pragma comment(lib,"zlib.lib")
 #pragma comment(lib,"pugixml.lib")
 #pragma comment(lib,"libcurl.lib")
+#endif
 
 // Заставляем линкер генерировать манифест визуальных стилей окон
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
