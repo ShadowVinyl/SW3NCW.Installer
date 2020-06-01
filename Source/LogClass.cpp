@@ -9,7 +9,6 @@
 
 #include "pugixml_read.h"
 #include "FileClass.h"
-#include "CnsClass.h"
 #include "LogClass.h"
 
 extern const wchar_t* progver;
