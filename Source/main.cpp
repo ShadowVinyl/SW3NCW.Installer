@@ -6,10 +6,12 @@
 #include <iso646.h>
 #include <comdef.h>
 
-#include "ClassInst.h"
-#include "pugixml_read.h"
 #include "main.h"
+#include "pugixml_read.h"
 #include "json_read.h"
+#include "FileClass.h"
+#include "CnsClass.h"
+#include "LogClass.h"
 
 #define CURL_STATICLIB
 #define NO_WIN32_LEAN_AND_MEAN
