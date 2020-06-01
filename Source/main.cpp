@@ -6,6 +6,7 @@
 #include <iso646.h>
 #include <comdef.h>
 
+#include "ClassInst.h"
 #include "pugixml_read.h"
 #include "main.h"
 #include "json_read.h"
@@ -55,14 +56,10 @@ HDC hdc;
 
 LPCSTR FontName[]		= { "Verdana" };
 
-#if defined(_WIN64) or defined(WIN64)
-const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer";
-#else
-const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer (x86)";
-#endif
 const int WINDOW_SIZE_X = 640;
 const int WINDOW_SIZE_Y = 480;
 const char* FTP_URL		= "ftp://158.46.49.38/";
+const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer";
 const wchar_t* WinClass	= L"Main window class";
 const wchar_t* LogFile	= L"filelog.txt";
 const wchar_t* cfgFile	= L"filecfg.xml";
@@ -70,13 +67,17 @@ const wchar_t* progver	= L"1.5";
 wchar_t SavedPath[2048] = L"C:\\Program Files (x86)";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 int CurrentLang			= 0;
-bool QueueError			= FALSE;
-bool Beginning			= FALSE;
+bool QueueError			= false;
+bool Beginning			= false;
 LPCSTR Lang1;
 LPCSTR Lang2;
 
+FileClass File;
+LogClass LOG;
+CnsClass Console;
+WindowClass Window;
 
-void Window::WindowMenu(HWND hWnd)
+void WindowClass::WindowMenu(HWND hWnd)
 {
 	hButtonStart = CreateWindowExA(
 		0,
@@ -142,7 +143,7 @@ void Window::WindowMenu(HWND hWnd)
 	SendMessageA(hComboBox, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
 
 }
-void Window::ChangeLanguage()
+void WindowClass::ChangeLanguage()
 {
 	SendMessageA(hButtonStart, WM_SETTEXT, 0, (LPARAM)ReadJSONLocTag("bInstallStart").c_str());
 	SendMessageA(hButtonInfo,  WM_SETTEXT, 0, (LPARAM)ReadJSONLocTag("bModGuide").c_str());
@@ -156,25 +157,25 @@ void Window::ChangeLanguage()
 	if (CurrentLang == 0)
 	{
 		CurrentLang = 1;
-		LogClass::LOG("(INFO) [Main] UI language was changed to English");
+		LOG.LOG("(INFO) [Main] UI language was changed to English");
 		WriteXMLConfigTag("InterfaceLang", "English");
 	}
 	else
 	{
 		CurrentLang = 0;
-		LogClass::LOG("(INFO) [Main] UI language was changed to Russian");
+		LOG.LOG("(INFO) [Main] UI language was changed to Russian");
 		WriteXMLConfigTag("InterfaceLang", "Russian");
 	}
 }
-void Window::EnableButtons(bool Flag)
+void WindowClass::EnableButtons(bool Flag)
 {
 	EnableWindow(hButtonStart, Flag);
 	EnableWindow(hButtonInfo, Flag);
 }
-bool Window::BrowseForFolder()
+bool WindowClass::BrowseForFolder()
 {
 	wchar_t DestDir[2048];
-	BOOL fRet;
+	bool fRet;
 
 	std::string titletxt = ReadJSONLocTag("cChInstallPath").c_str();
 
@@ -192,12 +193,12 @@ bool Window::BrowseForFolder()
 	LPITEMIDLIST pidl = ::SHBrowseForFolderA(&bi);
 
 	if (!pidl)
-		fRet = NULL;
+		fRet = false;
 	else
 	{
 		fRet = SHGetPathFromIDListW(pidl, (LPWSTR)DestDir);
 		wcscat(DestDir, L"\\\0");
-		FileClass::FileQueueSet(DestDir);
+		File.FileQueueSet(DestDir);
 	}
 	return fRet;
 }
@@ -244,9 +245,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	);
 
 	if (!hWnd) {
-		CnsClass::ShowConsole();
-		CnsClass::Print("Red","Failure in window creation (%d)\n", GetLastError());
-		LogClass::LOG("(ERROR) [Main] Failure in window creation (%d)", GetLastError());
+		Console.ShowConsole();
+		Console.Print("Red","Failure in window creation (%d)\n", GetLastError());
+		LOG.LOG("(ERROR) [Main] Failure in window creation (%d)", GetLastError());
 		MessageBoxA(NULL, "Window creation is failed.", (LPCSTR)WndName, MB_OK | MB_ICONERROR);
 		return FALSE;
 	};
@@ -266,7 +267,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	switch (message)
 	{
 		case WM_CREATE:
-			Window::WindowMenu(hWnd);
+			Window.WindowMenu(hWnd);
 			break;
 		case WM_PAINT:
 		{
@@ -296,11 +297,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		break;
 		case WM_COMMAND:
 		{
-			if (LOWORD(wParam) == ID_ABOUT)
-			{
-				DialogBox(hInstance, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-				break;
-			}
 			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
 				char ListItem[256];
@@ -311,16 +307,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				else
 					InstallLang = 1;
 			}
+			if (LOWORD(wParam) == ID_ABOUT)
+				DialogBox(hInstance, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 			if (LOWORD(wParam) == ID_START)
-				Window::BrowseForFolder();
+				Window.BrowseForFolder();
 			if (LOWORD(wParam) == ID_FAQ)
 				ShellExecute(0, 0, L"https://steamcommunity.com/sharedfiles/filedetails/?id=766483986", 0, 0, SW_SHOW);
-			break;
 		}
 		break;
 		case WM_DISPLAYCHANGE:
 			InvalidateRect(hWnd, NULL, FALSE);
-			break;
+		break;
 		case WM_CLOSE:
 		{
 			titletext2 = ReadJSONLocTag("bOnExit").c_str();
@@ -338,18 +335,18 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		}
 		case WM_DESTROY:
 		{
-			FileClass::FilesDelete();
-			LogClass::ReleaseLog();
+			File.FilesDelete();
+			LOG.ReleaseLog();
 			PostQuitMessage(0);
-			break;
 		}
+		break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	return 0;
 }
-int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData)
+INT CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData)
 {
 	wchar_t szDir[2048];
 	switch (message)
@@ -361,11 +358,13 @@ int CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 		}
 		break;
 		case BFFM_SELCHANGED:
+		{
 			if (SHGetPathFromIDListW((LPITEMIDLIST)lParam, szDir))
 				SendMessage(hWnd, BFFM_SETSTATUSTEXT, 0, (LPARAM)szDir);
+		}
 		break;
 	}
-	return 0;
+	return FALSE;
 }
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -395,13 +394,13 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 		// if user pressed "X" button on console window
 	case CTRL_CLOSE_EVENT:
 	{
-		if (Beginning != FALSE)
+		if (Beginning)
 		{
-			FileClass::FilesDelete();
-			LogClass::LOG("(WARNING) [Main] A process was terminated by user prematurely!");
-			Beginning = FALSE;
+			File.FilesDelete();
+			LOG.LOG("(WARNING) [Main] A process was terminated by user prematurely!");
+			Beginning = false;
 		}
-		LogClass::ReleaseLog();
+		LOG.ReleaseLog();
 		FreeConsole();
 		return TRUE;
 	}
@@ -410,15 +409,15 @@ BOOL WINAPI CnsHandler(DWORD dwCtrlType)
 	}
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	LogClass::InitLog();
-	LogClass::LOG("(INFO) [Main] InitWindow...");
+	LOG.InitLog();
+	LOG.LOG("(INFO) [Main] InitWindow...");
 
 	AllocConsole();
 	FILE* CnsOpen = freopen("CONOUT$", "w", stdout);
 	SetConsoleCtrlHandler(CnsHandler, TRUE);
-	CnsClass::HideConsole();
+	Console.HideConsole();
 
 	std::string xmltag = ReadXMLConfigTag("InterfaceLang");
 	if (xmltag == "English")
@@ -431,22 +430,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	if (!RegisterMainClass(hInstance)) {
-		CnsClass::ShowConsole();
-		CnsClass::Print("Red", "Failure in class registration (%d)", GetLastError());
-		LogClass::LOG("(ERROR) [Main] Failure in class registration (%d)", GetLastError());
-		return FALSE;
+		Console.ShowConsole();
+		Console.Print("Red", "Failure in class registration (%d)", GetLastError());
+		LOG.LOG("(ERROR) [Main] Failure in class registration (%d)", GetLastError());
+		return false;
 	};
 
 	if (!InitInstance(hInstance, nCmdShow))
 	{
-		CnsClass::ShowConsole();
-		CnsClass::Print("Red", "Failure in init application(%d)", GetLastError());
-		LogClass::LOG("(ERROR) [Main] Failure in init application (%d)", GetLastError());
+		Console.ShowConsole();
+		Console.Print("Red", "Failure in init application(%d)", GetLastError());
+		LOG.LOG("(ERROR) [Main] Failure in init application (%d)", GetLastError());
 		MessageBoxA(NULL, "Init application is failed.", (LPCSTR)WndName, MB_OK | MB_ICONERROR);
-		return FALSE;
+		return false;
 	}
 
-	LogClass::LOG("(INFO) [Main] InitWindow: Ok!");
+	LOG.LOG("(INFO) [Main] InitWindow: Ok!");
 
 	// Message loop
 	MSG msg = { 0 };

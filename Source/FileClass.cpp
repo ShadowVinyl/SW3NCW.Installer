@@ -24,6 +24,10 @@ extern bool Beginning;
 extern int InstallLang;
 extern int CurrentLang;
 
+extern FileClass File;
+extern LogClass LOG;
+extern CnsClass Console;
+
 static size_t CurlWriteData(void* ptr, size_t size, const size_t nmemb, FILE* stream)
 {
 	return fwrite(ptr, size, nmemb, stream);
@@ -93,8 +97,8 @@ int  FileClass::FtpGetStatus()
 
 		if (result != CURLE_OK)
 		{
-			CnsClass::Print("Red", "Server is offline (%d)", result);
-			LogClass::LOG("(ERROR) [FileDownload] Server is offline (%d)", result);
+			Console.Print("Red", "Server is offline (%d)", result);
+			LOG.LOG("(ERROR) [FileDownload] Server is offline (%d)", result);
 		}
 		curl_easy_cleanup(curl);
 		curl_global_cleanup();
@@ -106,9 +110,9 @@ long FileClass::FileSize(const char* FileName)
 	FILE* file = fopen(FileName, "r");
 	if (!file)
 	{
-		CnsClass::Print("Red", "FileSize: cant open a file (%d)", GetLastError());
-		LogClass::LOG("(ERROR) [FileSize] Cant open a file %s (%d)", FileName, GetLastError());
-		return NULL;
+		Console.Print("Red", "FileSize: cant open a file (%d)", GetLastError());
+		LOG.LOG("(ERROR) [FileSize] Cant open a file %s (%d)", FileName, GetLastError());
+		return false;
 	}
 	fseek(file, 0L, SEEK_END);
 	long size = ftell(file);
@@ -121,9 +125,9 @@ bool FileClass::FileExists(const char* FileName)
 	FILE* file = fopen(FileName, "rb");
 	if (!file)
 	{
-		CnsClass::Print("Red", "FileExists: cant find %s on this adress (%d)", GetLastError());
-		LogClass::LOG("(ERROR) [FileExists] cant find %s on this adress (%d)", FileName, GetLastError());
-		return NULL;
+		Console.Print("Red", "FileExists: cant find %s on this adress (%d)", GetLastError());
+		LOG.LOG("(ERROR) [FileExists] cant find %s on this adress (%d)", FileName, GetLastError());
+		return false;
 	}
 	else
 	{
@@ -155,12 +159,12 @@ double FileClass::FtpGetFileSize(const char* FileName)
 		if (result == CURLE_OK) {
 			result = curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &filesize);
 			if ((result == CURLE_OK) && (filesize > 0.0))
-				CnsClass::Print(NULL, "File size %s: %0.0f Kbytes", FileName, filesize / 1024);
+				Console.Print(NULL, "File size %s: %0.0f Kbytes", FileName, filesize / 1024);
 		}
 		else
 		{
-			CnsClass::Print("Red", "Failed to get file size (%d)", result);
-			LogClass::LOG("(ERROR) Failed to get file size (%d)", result);
+			Console.Print("Red", "Failed to get file size (%d)", result);
+			LOG.LOG("(ERROR) Failed to get file size (%d)", result);
 		}
 		curl_easy_cleanup(curl);
 	}
@@ -172,14 +176,13 @@ double FileClass::FtpGetFileSize(const char* FileName)
 
 bool FileClass::FileDownload(const char* FileName)
 {
-	CnsClass::Print(NULL, "Load file %s from local server...\n", FileName);
-	LogClass::LOG("(INFO) [FileDownload] Load %s from local server.", FileName);
+	Console.Print(NULL, "Load file %s from local server...\n", FileName);
+	LOG.LOG("(INFO) [FileDownload] Load %s from local server.", FileName);
 
-	int result = FtpGetStatus();
-	if (result != CURLE_OK)
-		return 0;
+	if (FtpGetStatus() != CURLE_OK)
+		return false;
 
-	double size = FtpGetFileSize(FileName);
+	FtpGetFileSize(FileName);
 
 	CURL* curl = curl_easy_init();
 
@@ -199,32 +202,32 @@ bool FileClass::FileDownload(const char* FileName)
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, FALSE);
 			curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CurlProgress);
 
-			CnsClass::Print(NULL, "\nDownload: %s", FileName);
-			LogClass::LOG("(INFO) [FileDownload] Download: %s", FileName);
+			Console.Print(NULL, "\nDownload: %s", FileName);
+			LOG.LOG("(INFO) [FileDownload] Download: %s", FileName);
 
 			int result = curl_easy_perform(curl);
 			if (result != CURLE_OK)
 			{
-				CnsClass::Print("Red", "Error! Host is offline (%d).\nPlease try again later.", result);
-				LogClass::LOG("(ERROR) [FileDownload] Download is failed (%d)", result);
+				Console.Print("Red", "Error! Host is offline (%d).\nPlease try again later.", result);
+				LOG.LOG("(ERROR) [FileDownload] Download is failed (%d)", result);
 				fclose(ofile);
 				remove(FileName);
 				curl_easy_cleanup(curl);
-				return 0;
+				return false;
 			}
 			else
 			{
-				CnsClass::Print(NULL, "Progress: 100.0%%");
+				Console.Print(NULL, "Progress: 100.0%%");
 
 				double total;
 				result = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &total);
 				if (result == CURLE_OK)
-					LogClass::LOG("(INFO) [FileDownload] Download time (sec): %.1f", total);
+					LOG.LOG("(INFO) [FileDownload] Download time (sec): %.1f", total);
 				result = curl_easy_getinfo(curl, CURLINFO_SPEED_DOWNLOAD, &total);
 				if (result == CURLE_OK)
-					LogClass::LOG("(INFO) [FileDownload] Download speed (Kbyte/s): %.1f", total / 1024);
+					LOG.LOG("(INFO) [FileDownload] Download speed (Kbyte/s): %.1f", total / 1024);
 
-				LogClass::LOG("(INFO) [FileDownload] Download: Ok!");
+				LOG.LOG("(INFO) [FileDownload] Download: Ok!");
 			}
 			fclose(ofile);
 		}
@@ -233,8 +236,9 @@ bool FileClass::FileDownload(const char* FileName)
 		curl_easy_cleanup(curl);
 	}
 
-	CnsClass::Print("Green", "Load file %s from local server: Ok!", FileName);
-	return 1;
+	Console.Print("Green", "Load file %s from local server: Ok!", FileName);
+
+	return true;
 }
 bool FileClass::FileOpen(const char* FileName)
 {
@@ -242,21 +246,22 @@ bool FileClass::FileOpen(const char* FileName)
 	ZeroMemory(&cif, sizeof(STARTUPINFOA));
 	PROCESS_INFORMATION pi;
 
-	CnsClass::Print(NULL, "\nStarting extraction of %s...", FileName);
-	LogClass::LOG("(INFO) [FileOpen] Starting extraction of %s...", FileName);
+	Console.Print(NULL, "\nStarting extraction of %s...", FileName);
+	LOG.LOG("(INFO) [FileOpen] Starting extraction of %s...", FileName);
 	if (!CreateProcessA((LPCSTR)FileName, NULL, NULL, NULL, FALSE, NULL, NULL, NULL, &cif, &pi))
 	{
-		CnsClass::Print("Red", "Cant open a file (%d)", GetLastError());
-		LogClass::LOG("(ERROR) [FileOpen] Cant open a %s:", FileName);
-		return 0;
+		Console.Print("Red", "Cant open a file (%d)", GetLastError());
+		LOG.LOG("(ERROR) [FileOpen] Cant open a %s:", FileName);
+		return false;
 	}
 	WaitForSingleObject(pi.hProcess, INFINITE);
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
-	CnsClass::Print("Green", "Extraction is done.\n");
-	LogClass::LOG("(INFO) [FileOpen] Extraction of %s is done!", FileName);
-	return 1;
+	Console.Print("Green", "Extraction is done.\n");
+	LOG.LOG("(INFO) [FileOpen] Extraction of %s is done!", FileName);
+
+	return true;
 }
 int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 {
@@ -272,13 +277,13 @@ int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 	fileOperation.pTo    = Dest;
 	fileOperation.hwnd   = hWnd;
 
-	int result = 1;
+	int result = true;
 	int ShellResult = SHFileOperationW(&fileOperation);
 	if (ShellResult != 0)
 	{
-		CnsClass::Print("Red", "SHFileOperation error: %u", ShellResult);
-		LogClass::LOG("(ERROR) [Windows Shell] Error in SHFileOperation (%u)", ShellResult);
-		result = 0;
+		Console.Print("Red", "SHFileOperation error: %u", ShellResult);
+		LOG.LOG("(ERROR) [Windows Shell] Error in SHFileOperation (%u)", ShellResult);
+		result = false;
 	}
 
 	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));
@@ -288,17 +293,17 @@ int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
 
 void FileClass::FileQueueSet(wchar_t* DestDir)
 {
-	Beginning = TRUE;
-	CnsClass::ShowConsole();
+	Beginning = true;
+	Console.ShowConsole();
 	ShowWindow(hWnd, SW_HIDE);
-	LogClass::LOG("(INFO) [Main] A process was started.");
+	LOG.LOG("(INFO) [Main] A process was started.");
 
 	std::string langstr;
 	if (InstallLang == 0)
 		langstr = "Russian";
 	else
 		langstr = "English";
-	LogClass::LOG("(INFO) [Main] Used %s version of mod.", langstr.c_str());
+	LOG.LOG("(INFO) [Main] Used %s version of mod.", langstr.c_str());
 
 	// ”станавливаем заданную директорию "по умолчанию"
 	wchar_t Destination[2048];
@@ -306,7 +311,7 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 	wcscat(Destination, L"DataTemp\\");
 	CreateDirectoryW(Destination, NULL);
 	SetCurrentDirectoryW(Destination);
-	LogClass::LOG(L"(INFO) [Main] Destination path: %s", (LPCWSTR)Destination);
+	LOG.LOG(L"(INFO) [Main] Destination path: %s", (LPCWSTR)Destination);
 
 	char* FileName;
 	char files[4][40] = {
@@ -317,23 +322,26 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 
 	for (int i = 0; i < 4; i++)
 	{
-		if (i != 3)
+		switch (i)
 		{
-			FileName = files[i];
-		}
-		else
-		{
-			if (InstallLang == 0)
-				FileName = (char*)"4_temp_rus.exe";
-			else
-				FileName = (char*)"4_temp_eng.exe";
+			case 3:
+			{
+				if (InstallLang == 0)
+					FileName = (char*)"4_temp_rus.exe";
+				else
+					FileName = (char*)"4_temp_eng.exe";
+			}
+			break;
+			default:
+				FileName = files[i];
+			break;
 		}
 
-		CnsClass::Print("Yellow", L"[%d/4] Destination: %s\n", i+1, Destination);
+		Console.Print("Yellow", L"[%d/4] Destination: %s\n", i+1, Destination);
 
 		if (!FileDownload(FileName))
 		{
-			QueueError = TRUE;
+			QueueError = true;
 			Sleep(2000);
 			break;
 		}
@@ -341,9 +349,9 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 		Sleep(2000);
 		if (!FileOpen(FileName))
 		{
-			CnsClass::Print("Red", "Error! File %s is not found in the destination directory! Installation is failed!", FileName);
-			LogClass::LOG("(ERROR) [Main] %s is not found in the destination directory!", FileName);
-			QueueError = TRUE;
+			Console.Print("Red", "Error! File %s is not found in the destination directory! Installation is failed!", FileName);
+			LOG.LOG("(ERROR) [Main] %s is not found in the destination directory!", FileName);
+			QueueError = true;
 			Sleep(2000);
 			break;
 		}
@@ -355,16 +363,16 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 	SetCurrentDirectoryW(DestDir);
 	if (!QueueError)
 	{
-		LogClass::LOG("(INFO) [Windows Shell] Moving files into DATA folder...");
-		CnsClass::Print("Yellow", "Moving files into DATA folder...\nPlease, don't terminate the process to avoid mistakes!");
+		LOG.LOG("(INFO) [Windows Shell] Moving files into DATA folder...");
+		Console.Print("Yellow", "Moving files into DATA folder...\nPlease, don't terminate the process to avoid mistakes!");
 		if (!ShellMoveFiles(L"DataTemp\\Data\\*\0", L"Data\0"))
 		{
-			QueueError = TRUE;
+			QueueError = true;
 			Sleep(2000);
 		}
 		else
 		{
-			CnsClass::Print("Green", "Moving files into DATA folder: Ok!");
+			Console.Print("Green", "Moving files into DATA folder: Ok!");
 		}
 	}
 
@@ -373,25 +381,25 @@ void FileClass::FileQueueSet(wchar_t* DestDir)
 
 	Sleep(2000);
 	ShowWindow(hWnd, SW_SHOW);
-	CnsClass::HideConsole();
+	Console.HideConsole();
 	if (!QueueError)
 	{
 		LPCSTR titletext = ReadJSONLocTag("cInstallDone").c_str();
 		_bstr_t b(WndName);
 		const char* newTitle = b;
 		MessageBoxA(hWnd, titletext, newTitle, MB_OK | MB_ICONQUESTION);
-		LogClass::LOG("(INFO) [Main] Process was done successfully.\n");
+		LOG.LOG("(INFO) [Main] Process was done successfully.\n");
 	}
 	else
 	{
-		QueueError = FALSE;
+		QueueError = false;
 		LPCSTR titletext = ReadJSONLocTag("cInstallFailed").c_str();
 		_bstr_t b(WndName);
 		const char* newTitle = b;
 		MessageBoxA(hWnd, titletext, newTitle, MB_OK | MB_ICONERROR);
-		LogClass::LOG("(INFO) [Main] Process was done with errors.\n");
+		LOG.LOG("(INFO) [Main] Process was done with errors.\n");
 	}
-	Beginning = FALSE;
+	Beginning = false;
 }
 
 void FileClass::FilesDelete()
@@ -400,5 +408,4 @@ void FileClass::FilesDelete()
 	DeleteFileA("2_temp.exe");
 	DeleteFileA("3_temp.exe");
 	DeleteFileA("4_temp.exe");
-	return;
 }

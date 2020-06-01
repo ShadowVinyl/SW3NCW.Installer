@@ -10,6 +10,9 @@
 #include "CnsClass.h"
 #include "LogClass.h"
 
+extern LogClass LOG;
+extern CnsClass Console;
+
 #if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
 #define _CRT_SECURE_NO_WARNINGS
 #pragma warning(disable:4996)
@@ -38,9 +41,9 @@ std::string ReadJSONLocTag(const char* tagname)
     }
     else
     {
-        CnsClass::ShowConsole();
-        CnsClass::Print("Red", "Localization file was not found in locale folder! (%d)", GetLastError());
-        LogClass::LOG("(ERROR) [Main] Localization file was not found in locale folder! (%d)", GetLastError());
+        Console.ShowConsole();
+        Console.Print("Red", "Localization file was not found in locale folder! (%d)", GetLastError());
+        LOG.LOG("(ERROR) [Main] Localization file was not found in locale folder! (%d)", GetLastError());
         result = "Loc Error!";
     }
 
