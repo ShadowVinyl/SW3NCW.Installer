@@ -25,14 +25,12 @@
 #pragma warning(disable : 4302)
 
 #pragma comment(lib,"Shlwapi.lib")
+#pragma comment(lib,"zlib.lib")
+#pragma comment(lib,"pugixml.lib")
 
 #if defined(_DEBUG)
-#pragma comment(lib,"zlib.lib")
-#pragma comment(lib,"pugixml.lib")
 #pragma comment(lib,"libcurld.lib")
 #else
-#pragma comment(lib,"zlib.lib")
-#pragma comment(lib,"pugixml.lib")
 #pragma comment(lib,"libcurl.lib")
 #endif
 
@@ -64,8 +62,8 @@ const char* FTP_URL		= "ftp://158.46.49.38/";
 const wchar_t* WndName	= L"Star Wolves 3: New Civil War Installer";
 const wchar_t* WinClass	= L"Main window class";
 const wchar_t* LogFile	= L"filelog.txt";
-const wchar_t* cfgFile	= L"filecfg.xml";
-const wchar_t* progver	= L"1.5";
+const wchar_t* CfgFile	= L"filecfg.xml";
+const char* progver	= "1.5";
 wchar_t SavedPath[2048] = L"C:\\Program Files (x86)";
 int InstallLang			= 0; // 0 - Russian, 1 - English
 int CurrentLang			= 0;
@@ -93,7 +91,6 @@ void WindowClass::WindowMenu(HWND hWnd)
 		hInstance,
 		NULL
 	);
-
 	
 	hButtonInfo = CreateWindowExA(
 		0,
@@ -143,7 +140,6 @@ void WindowClass::WindowMenu(HWND hWnd)
 
 	ShowWindow(hWnd, SW_SHOW);
 	SendMessageA(hComboBox, CB_SETCURSEL, (WPARAM)1, (LPARAM)0);
-
 }
 void WindowClass::ChangeLanguage()
 {
@@ -177,7 +173,7 @@ void WindowClass::EnableButtons(bool Flag)
 bool WindowClass::BrowseForFolder()
 {
 	wchar_t DestDir[2048];
-	bool fRet;
+	bool result;
 
 	std::string titletxt = ReadJSONLocTag("cChInstallPath").c_str();
 
@@ -195,14 +191,14 @@ bool WindowClass::BrowseForFolder()
 	LPITEMIDLIST pidl = ::SHBrowseForFolderA(&bi);
 
 	if (!pidl)
-		fRet = false;
+		result = false;
 	else
 	{
-		fRet = SHGetPathFromIDListW(pidl, (LPWSTR)DestDir);
+		result = SHGetPathFromIDListW(pidl, (LPWSTR)DestDir);
 		wcscat(DestDir, L"\\\0");
 		File.FileQueueSet(DestDir);
 	}
-	return fRet;
+	return result;
 }
 
 ATOM RegisterMainClass(HINSTANCE hInstance)
@@ -355,8 +351,8 @@ INT CALLBACK BrowsePathProc(HWND hWnd, UINT message, LPARAM lParam, LPARAM pData
 	{
 		case BFFM_INITIALIZED:
 		{
-			LPCTSTR pszInitialPath = reinterpret_cast<LPCTSTR>(pData);
-			SendMessage(hWnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(pszInitialPath));
+			LPCTSTR InitialPath = reinterpret_cast<LPCTSTR>(pData);
+			SendMessage(hWnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(InitialPath));
 		}
 		break;
 		case BFFM_SELCHANGED:
@@ -425,13 +421,21 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (xmltag == "English")
 		CurrentLang = 1;
 
-	Lang1 = ReadJSONLocTag("cChLoc1").c_str();
-	Lang2 = ReadJSONLocTag("cChLoc2").c_str();
-
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	if (!RegisterMainClass(hInstance)) {
+	Lang1 = ReadJSONLocTag("cChLoc1").c_str();
+	Lang2 = ReadJSONLocTag("cChLoc2").c_str();
+	if (Lang1 == "Loc Error!" || Lang2 == "Loc Error!")
+	{
+		Console.ShowConsole();
+		Console.Print("Red", "Failure in getting locale file in the locale folder (%d)", GetLastError());
+		LOG.LOG("(ERROR) [Main] Failure in getting locale file in the locale folder (%d)", GetLastError());
+		return false;
+	}
+
+	if (!RegisterMainClass(hInstance))
+	{
 		Console.ShowConsole();
 		Console.Print("Red", "Failure in class registration (%d)", GetLastError());
 		LOG.LOG("(ERROR) [Main] Failure in class registration (%d)", GetLastError());
@@ -452,10 +456,9 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Message loop
 	MSG msg = { 0 };
 
-	BOOL bRet;
-	while (bRet = GetMessage(&msg, NULL, 0, 0) != 0)
+	while (BOOL Ret = GetMessage(&msg, NULL, 0, 0) != 0)
 	{
-		if (bRet != -1)
+		if (Ret != -1)
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

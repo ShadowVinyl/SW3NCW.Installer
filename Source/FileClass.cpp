@@ -76,11 +76,11 @@ int CurlProgress(void* ptr, double TotalToDownload, double NowDownloaded, double
 
 std::wstring GetExePath()
 {
-	wchar_t selfdir[MAX_PATH];
-	GetModuleFileNameW(NULL, selfdir, MAX_PATH);
-	PathRemoveFileSpecW(selfdir);
-	wcscat(selfdir, L"\\");
-	return selfdir;
+	wchar_t path[MAX_PATH];
+	GetModuleFileNameW(NULL, path, MAX_PATH);
+	PathRemoveFileSpecW(path);
+	wcscat(path, L"\\");
+	return path;
 }
 
 int  FileClass::FtpGetStatus()
@@ -263,10 +263,10 @@ bool FileClass::FileOpen(const char* FileName)
 
 	return true;
 }
-int  FileClass::ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath)
+int  FileClass::ShellMoveFiles(const wchar_t* SrcDir, const wchar_t* DestDir)
 {
-	const wchar_t* Src = srcPath;
-	const wchar_t* Dest = newPath;
+	const wchar_t* Src = SrcDir;
+	const wchar_t* Dest = DestDir;
 
 	SHFILEOPSTRUCTW fileOperation;
 	memset(&fileOperation, 0, sizeof(SHFILEOPSTRUCTW));

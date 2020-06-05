@@ -12,7 +12,7 @@ public:
 private:
 	bool FileDownload(const char* FileName);
 	bool FileOpen(const char* FileName);
-	int  ShellMoveFiles(const wchar_t* srcPath, const wchar_t* newPath);
+	int  ShellMoveFiles(const wchar_t* SrcDir, const wchar_t* DestDir);
 };
 
 
