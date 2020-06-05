@@ -11,7 +11,7 @@
 #include "FileClass.h"
 #include "LogClass.h"
 
-extern const wchar_t* progver;
+extern const char* progver;
 extern const wchar_t* LogFile;
 
 void LogClass::InitLog()
@@ -26,20 +26,13 @@ void LogClass::InitLog()
 	else
 		strcpy(TextUI, "English");
 
-	const wchar_t* str = progver;
-	char version[32];
-	size_t len = wcstombs(version, str, wcslen(str));
-	if (len > 0u)
-		version[len] = '\0';
-	puts(version);
-
 	time_t t = time(0);
 
 	std::wstring filename = GetExePath() + LogFile;
 
 	FILE* out = _wfopen(filename.c_str(), L"w");
 	fprintf(out, "Log started: %s\n", ctime(&t));
-	fprintf(out, "Version: %s\n", version);
+	fprintf(out, "Version: %s\n", progver);
 	fprintf(out, "Interface: %s\n\n", TextUI);
 	fclose(out);
 }
@@ -95,13 +88,6 @@ void LogClass::ReleaseLog()
 {
 	std::string xmltag = ReadXMLConfigTag("DisableLogging");
 	if (xmltag == "True") return;
-
-	const wchar_t* str = progver;
-	char buf[32];
-	size_t len = wcstombs(buf, str, wcslen(str));
-	if (len > 0u)
-		buf[len] = '\0';
-	puts(buf);
 
 	time_t t = time(0);
 
